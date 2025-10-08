@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'auth.php';
 
 $articoli = getArticoli();
 
@@ -10,6 +11,8 @@ if (isset($_GET['cerca']) && !empty($_GET['cerca'])) {
     $termine_ricerca = trim($_GET['cerca']);
     $articoli = filtraArticoli($articoli, $termine_ricerca);
 }
+
+$utente_corrente = getUtenteCorrente();
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -17,6 +20,81 @@ if (isset($_GET['cerca']) && !empty($_GET['cerca'])) {
     <meta charset="UTF-8">
     <title>Shop Online - Sistema Acquisti</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
+    <style>
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-right: auto;
+        }
+
+        .user-info {
+            color: white;
+            font-size: 14px;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-auth {
+            padding: 8px 16px;
+            background: #ff9900;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-auth:hover {
+            background: #e68900;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #ff9900;
+        }
+
+        .btn-outline:hover {
+            background: #ff9900;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff9900;
+            margin-right: auto;
+        }
+
+        .welcome-message {
+            text-align: center;
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+
+        .guest-message {
+            text-align: center;
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #17a2b8;
+        }
+    </style>
 </head>
 <body>
 <!-- Icona Carrello -->
@@ -32,14 +110,45 @@ if (isset($_GET['cerca']) && !empty($_GET['cerca'])) {
 <!-- Header -->
 <div class="header">
     <div class="header-content">
+        <!-- Logo a sinistra -->
         <div class="logo">🛍️ ShopOnline</div>
-        <div style="color: white; font-size: 14px;">
-            Sistema di acquisto intelligente
+
+        <!-- Menu utente subito dopo il logo -->
+        <div class="user-menu">
+            <?php if ($utente_corrente): ?>
+                <!-- Utente loggato -->
+                <div class="user-info">
+                    Ciao, <strong><?php echo htmlspecialchars($utente_corrente['nome']); ?>
+                </div>
+                <div class="user-actions">
+                    <a href="profilo.php" class="btn-auth btn-outline">👤 Profilo</a>
+                    <a href="logout.php" class="btn-auth">🚪 Logout</a>
+                </div>
+            <?php else: ?>
+                <!-- Utente non loggato -->
+                <div class="user-actions">
+                    <a href="login.php" class="btn-auth btn-outline">🔐 Login</a>
+                    <a href="registrazione.php" class="btn-auth">📝 Registrati</a>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
 <div class="container">
+    <!-- Messaggio di benvenuto -->
+    <?php if ($utente_corrente): ?>
+        <div class="welcome-message">
+            <h3>👋 Bentornato, <?php echo htmlspecialchars($utente_corrente['nome']); ?>!</h3>
+            <p>Pronto per trovare le migliori offerte? Cerca i prodotti che ti interessano e confronta i prezzi tra i fornitori.</p>
+        </div>
+    <?php else: ?>
+        <div class="guest-message">
+            <h3>👋 Benvenuto Ospite!</h3>
+            <p>Puoi cercare prodotti, confrontare i prezzi dei fornitori e aggiungere articoli al carrello. <strong>Registrati</strong> per completare gli acquisti!</p>
+        </div>
+    <?php endif; ?>
+
     <!-- Titolo e ricerca -->
     <div style="text-align: center; margin-bottom: 30px;">
         <h1 style="color: #232f3e; margin-bottom: 10px;">Benvenuto nel nostro Shop</h1>
@@ -74,7 +183,7 @@ if (isset($_GET['cerca']) && !empty($_GET['cerca'])) {
             <p>Prova a modificare i termini di ricerca o <a href="index.php">visualizza tutti i prodotti</a>.</p>
         </div>
     <?php else: ?>
-        <form action="cerca_fornitori.php" method="POST">
+        <form action="cerca_fornitori.php" method="POST" id="form-ricerca">
             <div class="products-grid">
                 <?php foreach($articoli as $articolo): ?>
                     <div class="product-card">
@@ -118,6 +227,14 @@ if (isset($_GET['cerca']) && !empty($_GET['cerca'])) {
                 <button type="submit" class="btn btn-primary" style="padding: 15px 30px; font-size: 18px;">
                     🔍 Cerca Migliori Fornitori
                 </button>
+
+                <?php if (!$utente_corrente): ?>
+                    <div style="margin-top: 10px;">
+                        <small style="color: #17a2b8;">
+                            ℹ️ Puoi cercare fornitori anche da ospite! Registrati per completare gli acquisti.
+                        </small>
+                    </div>
+                <?php endif; ?>
             </div>
         </form>
     <?php endif; ?>
@@ -128,14 +245,19 @@ if (isset($_GET['cerca']) && !empty($_GET['cerca'])) {
             <a href="carrello.php" class="btn btn-cart" style="padding: 12px 24px; font-size: 16px;">
                 🛒 Vai al Carrello (<?php echo contaArticoliCarrello(); ?> articoli)
             </a>
+            <?php if (!$utente_corrente): ?>
+                <div style="margin-top: 10px;">
+                    <small style="color: #17a2b8;">
+                        ℹ️ Il carrello viene salvato durante la sessione. Registrati per completare l'acquisto.
+                    </small>
+                </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 </div>
 
 <!-- Footer -->
-<div class="footer">
-    <p>© 2025 ShopOnline - Sistema di Gestione Acquisti. Tutti i diritti riservati.</p>
-</div>
+<?php include 'footer.php'; ?>
 
 <script>
     // Animazione per il carrello

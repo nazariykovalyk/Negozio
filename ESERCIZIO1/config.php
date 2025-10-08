@@ -1,5 +1,9 @@
 <?php
 // Configurazione database
+session_start();
+// Configurazione Perplexity AI
+define('PERPLEXITY_API_KEY', '');
+define('PERPLEXITY_API_URL', 'https://api.perplexity.ai/chat/completions');
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'Negozio');
 define('DB_USER', 'root');
@@ -17,7 +21,6 @@ function getDBConnection() {
 }
 
 // Avvia sessione
-session_start();
 
 // Inizializza carrello se non esiste
 if (!isset($_SESSION['carrello'])) {

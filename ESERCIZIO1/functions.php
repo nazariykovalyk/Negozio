@@ -193,6 +193,7 @@ function getDettagliOrdine($id_ordine) {
     $stmt->execute([$id_ordine]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
 // Aggiorna la sessione dopo un ordine per riflettere le nuove quantità
 function aggiornaSessionDopoOrdine($id_articolo, $id_fornitore, $quantita_ordinata) {
     if (!isset($_SESSION['risultati_ricerca'])) {
@@ -224,8 +225,6 @@ function aggiornaSessionDopoOrdine($id_articolo, $id_fornitore, $quantita_ordina
         }
     }
 }
-
-
 
 // Aggiungi prodotto al carrello
 function aggiungiAlCarrello($id_articolo, $quantita, $fornitore_scelto = null) {
@@ -265,6 +264,9 @@ function aggiungiAlCarrello($id_articolo, $quantita, $fornitore_scelto = null) {
         $_SESSION['carrello'][] = $item_carrello;
     }
 
+    // Salva automaticamente dopo aver aggiunto
+    salvaCarrelloAutomatico();
+
     return true;
 }
 
@@ -272,6 +274,8 @@ function aggiungiAlCarrello($id_articolo, $quantita, $fornitore_scelto = null) {
 function rimuoviDalCarrello($index) {
     if (isset($_SESSION['carrello'][$index])) {
         array_splice($_SESSION['carrello'], $index, 1);
+        // Salva automaticamente dopo la rimozione
+        salvaCarrelloAutomatico();
         return true;
     }
     return false;
@@ -290,6 +294,8 @@ function aggiornaQuantitaCarrello($index, $nuova_quantita) {
         $_SESSION['carrello'][$index]['sconto_applicato'] = $sconto;
         $_SESSION['carrello'][$index]['prezzo_finale'] = $prezzo_totale * (1 - $sconto/100);
 
+        // Salva automaticamente dopo l'aggiornamento
+        salvaCarrelloAutomatico();
         return true;
     }
     return false;
@@ -316,6 +322,8 @@ function contaArticoliCarrello() {
 // Svuota carrello
 function svuotaCarrello() {
     $_SESSION['carrello'] = [];
+    // Salva automaticamente dopo aver svuotato
+    salvaCarrelloAutomatico();
 }
 
 // Ottieni dettagli carrello
@@ -325,8 +333,13 @@ function getCarrello() {
 
 // Processa ordine dal carrello
 function processaOrdineCarrello() {
+    // Controllo di sicurezza aggiuntivo
+    if (!isset($_SESSION['user_id'])) {
+        throw new Exception("Utente non autenticato");
+    }
+
     if (empty($_SESSION['carrello'])) {
-        return false;
+        throw new Exception("Carrello vuoto");
     }
 
     $conn = getDBConnection();
@@ -402,7 +415,7 @@ function processaOrdineCarrello() {
 
         $conn->commit();
 
-        // Svuota carrello dopo ordine completato
+        // Svuota carrello dopo ordine completato E salva nel database
         svuotaCarrello();
 
         return $id_ordini;
@@ -412,6 +425,7 @@ function processaOrdineCarrello() {
         throw $e;
     }
 }
+
 // Filtra articoli per ricerca
 function filtraArticoli($articoli, $termine_ricerca) {
     $termine = strtolower($termine_ricerca);
@@ -430,7 +444,6 @@ function filtraArticoli($articoli, $termine_ricerca) {
 }
 
 // Ottieni URL immagine prodotto
-// Aggiungi questa funzione in functions.php
 function getImmagineProdotto($nome_prodotto) {
     $base_path = 'images/';
 
@@ -500,5 +513,326 @@ function truncateDescription($testo, $lunghezza) {
         return $testo;
     }
     return substr($testo, 0, $lunghezza) . '...';
+}
+
+// Salva carrello nel database
+function salvaCarrelloDatabase($id_utente, $carrello) {
+    $conn = getDBConnection();
+    try {
+        $carrello_json = json_encode($carrello);
+        $stmt = $conn->prepare("
+            INSERT INTO CarrelliSalvati (id_utente, carrello_data, data_salvataggio) 
+            VALUES (?, ?, NOW()) 
+            ON DUPLICATE KEY UPDATE carrello_data = ?, data_salvataggio = NOW()
+        ");
+        $stmt->execute([$id_utente, $carrello_json, $carrello_json]);
+        return true;
+    } catch (Exception $e) {
+        error_log("Errore salvataggio carrello: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Carica carrello dal database
+function caricaCarrelloDatabase($id_utente) {
+    $conn = getDBConnection();
+    try {
+        $stmt = $conn->prepare("SELECT carrello_data FROM CarrelliSalvati WHERE id_utente = ?");
+        $stmt->execute([$id_utente]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result && !empty($result['carrello_data'])) {
+            $carrello = json_decode($result['carrello_data'], true);
+            return is_array($carrello) ? $carrello : [];
+        }
+    } catch (Exception $e) {
+        error_log("Errore caricamento carrello: " . $e->getMessage());
+    }
+    return [];
+}
+
+// Salva carrello automaticamente (da chiamare quando si modifica il carrello)
+function salvaCarrelloAutomatico() {
+    if (isset($_SESSION['user_id']) && isset($_SESSION['carrello'])) {
+        salvaCarrelloDatabase($_SESSION['user_id'], $_SESSION['carrello']);
+    }
+}
+
+// ========================================
+// FUNZIONI METODI DI PAGAMENTO
+// ========================================
+
+// Ottieni tutti i metodi di pagamento di un utente
+function getMetodiPagamento($id_utente) {
+    $conn = getDBConnection();
+    try {
+        $stmt = $conn->prepare("
+            SELECT * FROM MetodiPagamento 
+            WHERE id_utente = ? 
+            ORDER BY preferito DESC, data_creazione DESC
+        ");
+        $stmt->execute([$id_utente]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Errore caricamento metodi pagamento: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Ottieni metodo di pagamento preferito
+function getMetodoPreferito($id_utente) {
+    $conn = getDBConnection();
+    try {
+        $stmt = $conn->prepare("
+            SELECT * FROM MetodiPagamento 
+            WHERE id_utente = ? AND preferito = TRUE 
+            LIMIT 1
+        ");
+        $stmt->execute([$id_utente]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Errore caricamento metodo preferito: " . $e->getMessage());
+        return null;
+    }
+}
+
+// Aggiungi nuovo metodo di pagamento
+function aggiungiMetodoPagamento($id_utente, $dati_metodo) {
+    $conn = getDBConnection();
+    try {
+        // Validazione base
+        if (empty($dati_metodo['tipo']) || empty($dati_metodo['titolare'])) {
+            return ['success' => false, 'message' => 'Tipo di pagamento e titolare sono obbligatori'];
+        }
+
+        // Validazioni specifiche per tipo
+        if ($dati_metodo['tipo'] === 'carta') {
+            if (empty($dati_metodo['numero_carta']) || empty($dati_metodo['scadenza']) || empty($dati_metodo['cvv'])) {
+                return ['success' => false, 'message' => 'Tutti i campi della carta sono obbligatori'];
+            }
+
+            // Verifica se la carta è già registrata
+            $stmt = $conn->prepare("SELECT id_metodo FROM MetodiPagamento WHERE numero_carta = ? AND id_utente = ?");
+            $stmt->execute([$dati_metodo['numero_carta'], $id_utente]);
+            if ($stmt->fetch()) {
+                return ['success' => false, 'message' => 'Questa carta è già registrata'];
+            }
+
+            // Verifica scadenza
+            $scadenza = DateTime::createFromFormat('Y-m', $dati_metodo['scadenza']);
+            $oggi = new DateTime();
+            if ($scadenza < $oggi) {
+                return ['success' => false, 'message' => 'La carta è scaduta'];
+            }
+        }
+        elseif ($dati_metodo['tipo'] === 'paypal') {
+            if (empty($dati_metodo['email_paypal'])) {
+                return ['success' => false, 'message' => 'Email PayPal è obbligatoria'];
+            }
+
+            // Verifica se l'email PayPal è già registrata
+            $stmt = $conn->prepare("SELECT id_metodo FROM MetodiPagamento WHERE email_paypal = ? AND id_utente = ?");
+            $stmt->execute([$dati_metodo['email_paypal'], $id_utente]);
+            if ($stmt->fetch()) {
+                return ['success' => false, 'message' => 'Questo indirizzo PayPal è già registrato'];
+            }
+        }
+        elseif ($dati_metodo['tipo'] === 'bonifico') {
+            if (empty($dati_metodo['iban'])) {
+                return ['success' => false, 'message' => 'IBAN è obbligatorio'];
+            }
+
+            // Verifica se l'IBAN è già registrato
+            $stmt = $conn->prepare("SELECT id_metodo FROM MetodiPagamento WHERE iban = ? AND id_utente = ?");
+            $stmt->execute([$dati_metodo['iban'], $id_utente]);
+            if ($stmt->fetch()) {
+                return ['success' => false, 'message' => 'Questo IBAN è già registrato'];
+            }
+        }
+
+        // Se è il primo metodo, imposta come preferito
+        $metodi_esistenti = getMetodiPagamento($id_utente);
+        $preferito = empty($metodi_esistenti) ? true : ($dati_metodo['preferito'] ?? false);
+
+        // Se si imposta come preferito, rimuovi preferito dagli altri
+        if ($preferito) {
+            $stmt = $conn->prepare("UPDATE MetodiPagamento SET preferito = FALSE WHERE id_utente = ?");
+            $stmt->execute([$id_utente]);
+        }
+
+        $stmt = $conn->prepare("
+            INSERT INTO MetodiPagamento 
+            (id_utente, tipo, titolare, numero_carta, scadenza, cvv, email_paypal, iban, preferito) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        $success = $stmt->execute([
+            $id_utente,
+            $dati_metodo['tipo'],
+            $dati_metodo['titolare'],
+            $dati_metodo['numero_carta'] ?? null,
+            $dati_metodo['scadenza'] ?? null,
+            $dati_metodo['cvv'] ?? null,
+            $dati_metodo['email_paypal'] ?? null,
+            $dati_metodo['iban'] ?? null,
+            $preferito
+        ]);
+
+        return $success ?
+            ['success' => true, 'message' => 'Metodo di pagamento aggiunto correttamente'] :
+            ['success' => false, 'message' => 'Errore durante l\'aggiunta del metodo di pagamento'];
+
+    } catch (Exception $e) {
+        error_log("Errore aggiunta metodo pagamento: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Errore database: ' . $e->getMessage()];
+    }
+}
+
+// Imposta metodo come preferito
+function impostaMetodoPreferito($id_utente, $id_metodo) {
+    $conn = getDBConnection();
+    try {
+        $conn->beginTransaction();
+
+        // Rimuovi preferito da tutti i metodi
+        $stmt = $conn->prepare("UPDATE MetodiPagamento SET preferito = FALSE WHERE id_utente = ?");
+        $stmt->execute([$id_utente]);
+
+        // Imposta preferito al metodo specificato
+        $stmt = $conn->prepare("UPDATE MetodiPagamento SET preferito = TRUE WHERE id_metodo = ? AND id_utente = ?");
+        $success = $stmt->execute([$id_metodo, $id_utente]);
+
+        $conn->commit();
+        return $success;
+
+    } catch (Exception $e) {
+        $conn->rollBack();
+        error_log("Errore impostazione metodo preferito: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Rimuovi metodo di pagamento
+function rimuoviMetodoPagamento($id_utente, $id_metodo) {
+    $conn = getDBConnection();
+    try {
+        $stmt = $conn->prepare("DELETE FROM MetodiPagamento WHERE id_metodo = ? AND id_utente = ?");
+        $success = $stmt->execute([$id_metodo, $id_utente]);
+
+        if ($success) {
+            // Se era il preferito, imposta un altro metodo come preferito
+            $metodi_rimanenti = getMetodiPagamento($id_utente);
+            if (!empty($metodi_rimanenti)) {
+                impostaMetodoPreferito($id_utente, $metodi_rimanenti[0]['id_metodo']);
+            }
+        }
+
+        return $success;
+
+    } catch (Exception $e) {
+        error_log("Errore rimozione metodo pagamento: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Verifica se l'utente ha almeno un metodo di pagamento
+function haMetodiPagamento($id_utente) {
+    $conn = getDBConnection();
+    try {
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM MetodiPagamento WHERE id_utente = ?");
+        $stmt->execute([$id_utente]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'] > 0;
+    } catch (Exception $e) {
+        error_log("Errore verifica metodi pagamento: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Formatta numero carta per la visualizzazione (nasconde la maggior parte delle cifre)
+function formattaNumeroCarta($numero_carta) {
+    if (empty($numero_carta)) return '';
+    $numero_pulito = preg_replace('/\s+/', '', $numero_carta);
+    return '****' . substr($numero_pulito, -4);
+}
+
+// Formatta IBAN per la visualizzazione (nasconde la maggior parte delle cifre)
+function formattaIBAN($iban) {
+    if (empty($iban)) return '';
+    $iban_pulito = preg_replace('/\s+/', '', $iban);
+    return substr($iban_pulito, 0, 4) . '**' . substr($iban_pulito, -4);
+}
+
+// Salva il metodo di pagamento utilizzato per un ordine
+function salvaMetodoPagamentoOrdine($id_ordine, $id_metodo_pagamento) {
+    $conn = getDBConnection();
+    try {
+        $stmt = $conn->prepare("
+            UPDATE OrdiniAcquisto 
+            SET id_metodo_pagamento = ? 
+            WHERE id_ordine = ?
+        ");
+        return $stmt->execute([$id_metodo_pagamento, $id_ordine]);
+    } catch (Exception $e) {
+        error_log("Errore salvataggio metodo pagamento ordine: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Valida numero carta (Luhn algorithm)
+function validaNumeroCarta($numero_carta) {
+    $numero_pulito = preg_replace('/\s+/', '', $numero_carta);
+
+    // Verifica che contenga solo numeri e sia lungo 13-19 cifre
+    if (!preg_match('/^[0-9]{13,19}$/', $numero_pulito)) {
+        return false;
+    }
+
+    // Algoritmo di Luhn
+    $somma = 0;
+    $alterna = false;
+
+    for ($i = strlen($numero_pulito) - 1; $i >= 0; $i--) {
+        $n = intval($numero_pulito[$i]);
+        if ($alterna) {
+            $n *= 2;
+            if ($n > 9) {
+                $n = ($n % 10) + 1;
+            }
+        }
+        $somma += $n;
+        $alterna = !$alterna;
+    }
+
+    return ($somma % 10) === 0;
+}
+
+// Valida IBAN (formato base)
+function validaIBAN($iban) {
+    $iban_pulito = strtoupper(preg_replace('/\s+/', '', $iban));
+
+    // Verifica formato base (2 lettere + 2 cifre + 1-30 caratteri alfanumerici)
+    if (!preg_match('/^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/', $iban_pulito)) {
+        return false;
+    }
+
+    return true;
+}
+
+// Ottieni il tipo di carta dal numero (Visa, Mastercard, etc.)
+function getTipoCarta($numero_carta) {
+    $numero_pulito = preg_replace('/\s+/', '', $numero_carta);
+
+    if (preg_match('/^4[0-9]{12}(?:[0-9]{3})?$/', $numero_pulito)) {
+        return 'Visa';
+    } elseif (preg_match('/^5[1-5][0-9]{14}$/', $numero_pulito)) {
+        return 'Mastercard';
+    } elseif (preg_match('/^3[47][0-9]{13}$/', $numero_pulito)) {
+        return 'American Express';
+    } elseif (preg_match('/^6(?:011|5[0-9]{2})[0-9]{12}$/', $numero_pulito)) {
+        return 'Discover';
+    } else {
+        return 'Altro';
+    }
 }
 ?>

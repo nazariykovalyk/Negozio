@@ -1,6 +1,13 @@
 <?php
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'auth.php';
+// Controlla se l'utente è loggato per gli ordini singoli
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isUtenteLoggato()) {
+    $_SESSION['error'] = "Devi essere registrato per effettuare ordini";
+    header('Location: login.php');
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: index.php');
@@ -100,4 +107,7 @@ try {
     <?php endif; ?>
 </div>
 </body>
+<?php
+require_once 'footer.php';
+?>
 </html>
