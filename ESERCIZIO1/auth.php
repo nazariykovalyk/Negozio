@@ -77,7 +77,6 @@ function loginUtente($email, $password) {
 
 // Funzione per il logout
 function logoutUtente() {
-    // SALVA il carrello nel database prima del logout
     if (isset($_SESSION['user_id']) && isset($_SESSION['carrello'])) {
         salvaCarrelloDatabase($_SESSION['user_id'], $_SESSION['carrello']);
     }

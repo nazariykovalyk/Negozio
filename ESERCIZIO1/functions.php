@@ -116,7 +116,6 @@ function salvaOrdine($id_fornitore, $dettagli_ordine) {
     try {
         $conn->beginTransaction();
 
-        // 1. Crea l'ordine principale
         $stmt = $conn->prepare("
             INSERT INTO OrdiniAcquisto (data_ordine, id_fornitore, totale) 
             VALUES (CURDATE(), ?, ?)
@@ -130,7 +129,6 @@ function salvaOrdine($id_fornitore, $dettagli_ordine) {
         $stmt->execute([$id_fornitore, $totale_ordine]);
         $id_ordine = $conn->lastInsertId();
 
-        // 2. Salva i dettagli dell'ordine
         foreach ($dettagli_ordine as $dettaglio) {
             $stmt = $conn->prepare("
                 INSERT INTO DettagliOrdine 
@@ -145,7 +143,6 @@ function salvaOrdine($id_fornitore, $dettagli_ordine) {
                 $dettaglio['sconto_applicato']
             ]);
 
-            // 3. Aggiorna la quantità disponibile
             $stmt = $conn->prepare("
                 UPDATE Articoli_Fornitori 
                 SET quantita_disponibile = quantita_disponibile - ? 
@@ -167,7 +164,6 @@ function salvaOrdine($id_fornitore, $dettagli_ordine) {
     }
 }
 
-// Ottieni i dettagli di un ordine
 function getDettagliOrdine($id_ordine) {
     $conn = getDBConnection();
 
@@ -214,7 +210,6 @@ function aggiornaSessionDopoOrdine($id_articolo, $id_fornitore, $quantita_ordina
                         $key = array_search($fornitore, $ordine['fornitori']);
                         if ($key !== false) {
                             unset($ordine['fornitori'][$key]);
-                            // Ri-indexa l'array
                             $ordine['fornitori'] = array_values($ordine['fornitori']);
                         }
                     }
@@ -234,7 +229,7 @@ function aggiungiAlCarrello($id_articolo, $quantita, $fornitore_scelto = null) {
         if (empty($fornitori)) {
             return false;
         }
-        $fornitore_scelto = $fornitori[0]; // Prendi il migliore
+        $fornitore_scelto = $fornitori[0];
     }
 
     $item_carrello = [
@@ -322,7 +317,6 @@ function contaArticoliCarrello() {
 // Svuota carrello
 function svuotaCarrello() {
     $_SESSION['carrello'] = [];
-    // Salva automaticamente dopo aver svuotato
     salvaCarrelloAutomatico();
 }
 
@@ -443,12 +437,10 @@ function filtraArticoli($articoli, $termine_ricerca) {
     return $risultati;
 }
 
-// Ottieni URL immagine prodotto
 function getImmagineProdotto($nome_prodotto) {
     $base_path = 'images/';
 
     $immagini = [
-        // Prodotti originali
         'Philips Monitor' => 'monitor.jpg',
         'Logitech Mouse' => 'mouse.jpg',
         'Tastiera Logitech' => 'tast.jpg',
@@ -456,8 +448,6 @@ function getImmagineProdotto($nome_prodotto) {
         'Cavo HDMI' => 'cavo.jpg',
         'SSD Samsung' => 'ssd.jpg',
         'Webcam Logitech' => 'web.jpg',
-
-        // Nuovi prodotti hardware PC
         'Scheda Madre ASUS' => 'asus.jpg',
         'Alimentatore Corsair' => 'cs650m.jpg',
         'RAM Kingston' => 'ram.jpg',
@@ -466,27 +456,13 @@ function getImmagineProdotto($nome_prodotto) {
         'Scheda Video NVIDIA' => 'video.jpg',
         'Case PC NZXT' => 'case.jpg',
         'Dissipatore Cooler Master' => 'dis.jpg',
-
-        // Periferiche gaming
         'Mouse da Gaming Razer' => 'Razer.jpg',
         'Tastiera Meccanica Redragon' => 'red.jpg',
-
-        // Monitor e display
         'Monitor LG' => 'lg.jpg',
-
-        // Storage
         'Hard Disk WD' => 'image.jpg',
-
-        // Stampanti
         'Stampante Epson' => 'Epson.jpg',
-
-        // Networking
         'Router TP-Link' => 'Router.jpg',
-
-        // Audio
         'Cuffie Sony' => 'Sony.jpg',
-
-        // Accessori mobile
         'Powerbank Anker' => 'power.jpg',
         'Chiavetta USB 64GB Sandisk' => 'usb.jpg',
         'Tablet Samsung' => 'tab.jpg',
@@ -503,7 +479,6 @@ function getImmagineProdotto($nome_prodotto) {
         }
     }
 
-    // Immagine di default se non trovata
     return $base_path . 'default.jpg';
 }
 
@@ -558,9 +533,7 @@ function salvaCarrelloAutomatico() {
     }
 }
 
-// ========================================
 // FUNZIONI METODI DI PAGAMENTO
-// ========================================
 
 // Ottieni tutti i metodi di pagamento di un utente
 function getMetodiPagamento($id_utente) {
@@ -749,21 +722,18 @@ function haMetodiPagamento($id_utente) {
     }
 }
 
-// Formatta numero carta per la visualizzazione (nasconde la maggior parte delle cifre)
 function formattaNumeroCarta($numero_carta) {
     if (empty($numero_carta)) return '';
     $numero_pulito = preg_replace('/\s+/', '', $numero_carta);
     return '****' . substr($numero_pulito, -4);
 }
 
-// Formatta IBAN per la visualizzazione (nasconde la maggior parte delle cifre)
 function formattaIBAN($iban) {
     if (empty($iban)) return '';
     $iban_pulito = preg_replace('/\s+/', '', $iban);
     return substr($iban_pulito, 0, 4) . '**' . substr($iban_pulito, -4);
 }
 
-// Salva il metodo di pagamento utilizzato per un ordine
 function salvaMetodoPagamentoOrdine($id_ordine, $id_metodo_pagamento) {
     $conn = getDBConnection();
     try {
@@ -779,7 +749,6 @@ function salvaMetodoPagamentoOrdine($id_ordine, $id_metodo_pagamento) {
     }
 }
 
-// Valida numero carta (Luhn algorithm)
 function validaNumeroCarta($numero_carta) {
     $numero_pulito = preg_replace('/\s+/', '', $numero_carta);
 
@@ -807,7 +776,6 @@ function validaNumeroCarta($numero_carta) {
     return ($somma % 10) === 0;
 }
 
-// Valida IBAN (formato base)
 function validaIBAN($iban) {
     $iban_pulito = strtoupper(preg_replace('/\s+/', '', $iban));
 
@@ -819,7 +787,6 @@ function validaIBAN($iban) {
     return true;
 }
 
-// Ottieni il tipo di carta dal numero (Visa, Mastercard, etc.)
 function getTipoCarta($numero_carta) {
     $numero_pulito = preg_replace('/\s+/', '', $numero_carta);
 

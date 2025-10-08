@@ -23,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     $indirizzo = trim($_POST['indirizzo']);
     $citta = trim($_POST['citta']);
 
-    // Validazioni
     if ($password !== $conferma_password) {
         $error = 'Le password non coincidono';
     } elseif (strlen($password) < 6) {

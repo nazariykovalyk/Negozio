@@ -1,5 +1,4 @@
 <?php
-// perplexity_api.php - Versione migliorata
 require_once 'config.php';
 require_once 'functions.php';
 
@@ -347,7 +346,6 @@ ISTRUZIONE IMPORTANTE: Se l'utente chiede informazioni su prodotti specifici che
     }
 }
 
-// Funzioni per gestire le conversazioni
 function salvaConversazione($id_utente, $sessione_id, $messaggio_utente, $risposta_bot) {
     $conn = getDBConnection();
     try {

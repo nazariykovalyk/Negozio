@@ -5,7 +5,6 @@ require_once 'auth.php';
 
 $utente_corrente = getUtenteCorrente();
 
-// CONTROLLO METODI DI PAGAMENTO - Solo per utenti loggati
 if ($utente_corrente) {
     $metodi_pagamento = getMetodiPagamento($utente_corrente['id']);
     $ha_metodi_pagamento = !empty($metodi_pagamento);
@@ -13,7 +12,6 @@ if ($utente_corrente) {
     $ha_metodi_pagamento = false;
 }
 
-// NON cancellare la sessione, così puoi tornare ai risultati
 if (!isset($_SESSION['risultati_ricerca'])) {
     header('Location: index.php');
     exit;
@@ -61,7 +59,6 @@ $ordini = $_SESSION['risultati_ricerca'];
     </style>
 </head>
 <body>
-<!-- Icona Carrello -->
 <div class="header-carrello">
     <a href="carrello.php" style="background: #232f3e; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; display: flex; align-items: center;">
         🛒 Carrello
@@ -136,7 +133,6 @@ $ordini = $_SESSION['risultati_ricerca'];
                             <td><?php echo $fornitore['giorni_spedizione']; ?> giorni</td>
                             <td><?php echo $fornitore['quantita_disponibile']; ?></td>
                             <td>
-                                <!-- AGGIUNGI AL CARRELLO (disponibile per tutti) -->
                                 <form action="aggiungi_carrello.php" method="POST" class="form-ordine" style="margin-bottom: 5px;">
                                     <input type="hidden" name="id_articolo" value="<?php echo $ordine['id_articolo']; ?>">
                                     <input type="hidden" name="quantita" value="<?php echo $ordine['quantita']; ?>">
@@ -145,7 +141,6 @@ $ordini = $_SESSION['risultati_ricerca'];
                                 </form>
 
                                 <?php if ($utente_corrente && $ha_metodi_pagamento): ?>
-                                    <!-- ORDINE IMMEDIATO (solo per utenti loggati CON metodi di pagamento) -->
                                     <form action="conferma_ordine.php" method="POST" class="form-ordine">
                                         <input type="hidden" name="id_articolo" value="<?php echo $ordine['id_articolo']; ?>">
                                         <input type="hidden" name="id_fornitore" value="<?php echo $fornitore['id_fornitore']; ?>">

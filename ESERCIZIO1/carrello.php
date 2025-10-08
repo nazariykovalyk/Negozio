@@ -3,7 +3,6 @@ require_once 'config.php';
 require_once 'functions.php';
 require_once 'auth.php';
 
-// Gestisci azioni carrello
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['aggiorna_quantita'])) {
         $index = $_POST['index'];
@@ -52,7 +51,6 @@ $totale = calcolaTotaleCarrello();
 $conta_articoli = contaArticoliCarrello();
 $utente_corrente = getUtenteCorrente();
 
-// Controlla metodi di pagamento solo per utenti loggati
 if ($utente_corrente) {
     $metodi_pagamento = getMetodiPagamento($utente_corrente['id']);
     $ha_metodi_pagamento = !empty($metodi_pagamento);
@@ -129,7 +127,6 @@ if ($utente_corrente) {
 </head>
 <body>
 
-<!-- Icona Carrello -->
 <div class="header-carrello">
     <a href="carrello.php" style="background: #232f3e; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; display: flex; align-items: center;">
         🛒 Carrello
@@ -179,7 +176,6 @@ if ($utente_corrente) {
                 </div>
             </div>
         <?php else: ?>
-            <!-- Sezione Metodi di Pagamento (solo per utenti loggati con metodi) -->
             <div class="payment-info">
                 <h3>💳 Metodo di Pagamento</h3>
                 <p><strong>Metodo selezionato:</strong>
@@ -208,7 +204,6 @@ if ($utente_corrente) {
             </div>
         <?php endif; ?>
 
-        <!-- Lista articoli nel carrello -->
         <?php foreach ($carrello as $index => $item): ?>
             <div class="item-carrello">
                 <div class="item-header">
@@ -252,7 +247,6 @@ if ($utente_corrente) {
             </div>
         <?php endforeach; ?>
 
-        <!-- Totale e azioni -->
         <div class="totale-section">
             <h2>Totale carrello: <span class="totale-importo">€<?php echo number_format($totale, 2); ?></span></h2>
             <p style="color: #565959;">Spedizione: Calcolata per ogni fornitore</p>
@@ -266,14 +260,12 @@ if ($utente_corrente) {
                 </form>
 
                 <?php if ($utente_corrente && $ha_metodi_pagamento): ?>
-                    <!-- Pulsante acquisto abilitato per utenti loggati CON metodi di pagamento -->
                     <form method="POST" style="display: inline;">
                         <button type="submit" name="procedi_acquisto" class="btn btn-success">
                             Procedi all'acquisto ›
                         </button>
                     </form>
                 <?php else: ?>
-                    <!-- Pulsante acquisto disabilitato -->
                     <button type="button" class="btn btn-success btn-disabled" disabled>
                         Procedi all'acquisto ›
                     </button>
@@ -293,7 +285,6 @@ if ($utente_corrente) {
 </div>
 
 <script>
-    // Previeni l'acquisto se l'utente non è loggato o non ha metodi di pagamento
     document.addEventListener('DOMContentLoaded', function() {
         const acquistoButtons = document.querySelectorAll('button[name="procedi_acquisto"]');
         acquistoButtons.forEach(button => {
@@ -310,7 +301,6 @@ if ($utente_corrente) {
             });
         });
 
-        // Mostra messaggio se si clicca sul pulsante disabilitato
         const btnDisabled = document.querySelector('.btn-disabled');
         if (btnDisabled) {
             btnDisabled.addEventListener('click', function(e) {

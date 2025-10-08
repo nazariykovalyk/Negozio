@@ -842,7 +842,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
         </form>
     </div>
 
-    <!-- Sezione: Informazioni Account -->
     <div class="sezione">
         <h2>Informazioni Account</h2>
         <div class="info-riga">
@@ -895,15 +894,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
             const radio = option.querySelector('input[type="radio"]');
 
             option.addEventListener('click', function() {
-                // Rimuovi selezione da tutte le opzioni
                 tipoOptions.forEach(opt => opt.classList.remove('selected'));
-                // Aggiungi selezione all'opzione cliccata
                 option.classList.add('selected');
-                // Mostra i campi corrispondenti
                 mostraCampi(radio.value);
             });
 
-            // Gestione cambio tramite radio button
             radio.addEventListener('change', function() {
                 if (this.checked) {
                     tipoOptions.forEach(opt => opt.classList.remove('selected'));
@@ -912,14 +907,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
                 }
             });
 
-            // Se è già selezionato all'avvio
             if (radio.checked) {
                 option.classList.add('selected');
                 mostraCampi(radio.value);
             }
         });
 
-        // Formattazione numero carta
         const numeroCartaInput = document.getElementById('numero_carta');
         if (numeroCartaInput) {
             numeroCartaInput.addEventListener('input', function(e) {
@@ -931,7 +924,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
             });
         }
 
-        // Formattazione IBAN
         const ibanInput = document.getElementById('iban');
         if (ibanInput) {
             ibanInput.addEventListener('input', function(e) {

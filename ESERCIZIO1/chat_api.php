@@ -26,8 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $contesto = "L'utente è registrato nel sistema.";
     }
 
-    // Usa Perplexity invece di Ollama
-    $perplexity = new PerplexityAPI();  // ← CAMBIA QUI
+    $perplexity = new PerplexityAPI();
 
     $result = $perplexity->sendMessage($messaggio, $contesto);
 

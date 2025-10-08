@@ -2,7 +2,6 @@
 require_once 'config.php';
 require_once 'functions.php';
 require_once 'auth.php';
-// Controlla se l'utente è loggato per gli ordini singoli
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isUtenteLoggato()) {
     $_SESSION['error'] = "Devi essere registrato per effettuare ordini";
     header('Location: login.php');
@@ -26,13 +25,10 @@ try {
             'nome_articolo' => $_POST['nome_articolo']
     ];
 
-    // Salva l'ordine nel database
     $id_ordine = salvaOrdine($id_fornitore, [$dettaglio_ordine]);
 
-    // OTTIENI I DETTAGLI COMPLETI DELL'ORDINE
     $dettagli_ordine = getDettagliOrdine($id_ordine);
 
-    // ⭐⭐ IMPORTANTE: AGGIORNA LA SESSIONE CON I NUOVI DATI ⭐⭐
     aggiornaSessionDopoOrdine($_POST['id_articolo'], $_POST['id_fornitore'], $_POST['quantita']);
 
 } catch (Exception $e) {

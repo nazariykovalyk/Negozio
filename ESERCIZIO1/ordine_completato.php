@@ -46,8 +46,6 @@ require_once 'config.php';
 require_once 'functions.php';
 require_once 'auth.php';
 
-// Gli utenti non loggati possono cercare fornitori
-// Non serve il controllo di autenticazione qui
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quantita'])) {
     $ordini = [];

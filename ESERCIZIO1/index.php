@@ -5,7 +5,6 @@ require_once 'auth.php';
 
 $articoli = getArticoli();
 
-// Gestisci ricerca
 $termine_ricerca = '';
 if (isset($_GET['cerca']) && !empty($_GET['cerca'])) {
     $termine_ricerca = trim($_GET['cerca']);
@@ -107,13 +106,10 @@ $utente_corrente = getUtenteCorrente();
     </a>
 </div>
 
-<!-- Header -->
 <div class="header">
     <div class="header-content">
-        <!-- Logo a sinistra -->
         <div class="logo">🛍️ ShopOnline</div>
 
-        <!-- Menu utente subito dopo il logo -->
         <div class="user-menu">
             <?php if ($utente_corrente): ?>
                 <!-- Utente loggato -->
@@ -136,7 +132,6 @@ $utente_corrente = getUtenteCorrente();
 </div>
 
 <div class="container">
-    <!-- Messaggio di benvenuto -->
     <?php if ($utente_corrente): ?>
         <div class="welcome-message">
             <h3>👋 Bentornato, <?php echo htmlspecialchars($utente_corrente['nome']); ?>!</h3>
@@ -149,13 +144,11 @@ $utente_corrente = getUtenteCorrente();
         </div>
     <?php endif; ?>
 
-    <!-- Titolo e ricerca -->
     <div style="text-align: center; margin-bottom: 30px;">
         <h1 style="color: #232f3e; margin-bottom: 10px;">Benvenuto nel nostro Shop</h1>
         <p style="color: #666; font-size: 16px;">Trova i prodotti migliori al prezzo più conveniente</p>
     </div>
 
-    <!-- Barra di ricerca -->
     <form method="GET" action="index.php" class="search-bar">
         <input type="text"
                name="cerca"
@@ -168,7 +161,6 @@ $utente_corrente = getUtenteCorrente();
         <?php endif; ?>
     </form>
 
-    <!-- Risultati ricerca -->
     <?php if (!empty($termine_ricerca)): ?>
         <div style="margin-bottom: 20px; color: #666;">
             <strong>Risultati per:</strong> "<?php echo htmlspecialchars($termine_ricerca); ?>"
@@ -176,7 +168,6 @@ $utente_corrente = getUtenteCorrente();
         </div>
     <?php endif; ?>
 
-    <!-- Griglia prodotti -->
     <?php if (empty($articoli)): ?>
         <div class="no-results">
             <h2>Nessun prodotto trovato</h2>
@@ -193,17 +184,14 @@ $utente_corrente = getUtenteCorrente();
                              class="product-image"
                              onerror="this.src='https://via.placeholder.com/250x200/007bff/ffffff?text=<?php echo urlencode($articolo['nome']); ?>'">
 
-                        <!-- Informazioni prodotto -->
                         <div class="product-name"><?php echo htmlspecialchars($articolo['nome']); ?></div>
                         <div class="product-sku">SKU: <?php echo htmlspecialchars($articolo['SKU']); ?></div>
                         <div class="product-price">€<?php echo number_format($articolo['prezzo_vendita'], 2); ?></div>
 
-                        <!-- Descrizione -->
                         <div class="product-description">
                             <?php echo htmlspecialchars(truncateDescription($articolo['descrizione'] ?? '', 100)); ?>
                         </div>
 
-                        <!-- Selezione quantità -->
                         <div class="product-form">
                             <div class="form-group">
                                 <label for="quantita_<?php echo $articolo['id_articolo']; ?>">
@@ -256,11 +244,9 @@ $utente_corrente = getUtenteCorrente();
     <?php endif; ?>
 </div>
 
-<!-- Footer -->
 <?php include 'footer.php'; ?>
 
 <script>
-    // Animazione per il carrello
     document.addEventListener('DOMContentLoaded', function() {
         const cartButtons = document.querySelectorAll('.btn-cart');
         cartButtons.forEach(button => {

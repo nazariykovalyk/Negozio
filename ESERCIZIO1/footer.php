@@ -1,5 +1,4 @@
 <?php
-// footer.php
 ?>
 <footer class="footer">
     <div class="container">
@@ -264,7 +263,6 @@
         // Messaggio di benvenuto
         addBotMessage('Ciao! Sono l\'assistente virtuale di ShopOnline. Come posso aiutarti con i nostri prodotti di elettronica?');
 
-        // Toggle chat
         chatToggle.addEventListener('click', function() {
             chatContainer.classList.toggle('show');
             if (chatContainer.classList.contains('show')) {

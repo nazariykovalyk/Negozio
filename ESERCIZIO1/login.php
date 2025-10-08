@@ -34,8 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $result = loginUtente($email, $password);
 
     if ($result['success']) {
-        // NOTA: Il carrello viene sempre iniziato vuoto al login
-        // Se vuoi mantenere il carrello tra le sessioni, usa le funzioni del database
         header('Location: index.php');
         exit;
     } else {

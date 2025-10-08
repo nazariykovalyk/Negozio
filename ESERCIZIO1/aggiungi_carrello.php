@@ -7,7 +7,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantita = $_POST['quantita'];
     $id_fornitore = $_POST['id_fornitore'];
 
-    // Trova i dettagli del fornitore
     $fornitori = trovaFornitori($id_articolo, $quantita);
     $fornitore_scelto = null;
 
