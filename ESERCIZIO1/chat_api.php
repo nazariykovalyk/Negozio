@@ -1,8 +1,7 @@
 <?php
-// chat_api.php
 require_once 'config.php';
 require_once 'auth.php';
-require_once 'perplexity_api.php';  // ← CAMBIA QUI
+require_once 'perplexity_api.php';
 
 header('Content-Type: application/json');
 

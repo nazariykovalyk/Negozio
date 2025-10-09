@@ -1,5 +1,3 @@
-<?php
-?>
 <footer class="footer">
     <div class="container">
         <div class="footer-content">
@@ -7,9 +5,7 @@
             <div class="footer-column">
                 <h3 class="footer-title">🛍️ ShopOnline</h3>
                 <p class="footer-description">
-                    Il tuo negozio di fiducia per acquisti intelligenti.
-                    Confrontiamo i prezzi di diversi fornitori per offrirti
-                    sempre il miglior rapporto qualità-prezzo.
+                    Il tuo negozio di fiducia per acquisti intelligenti. Confrontiamo i prezzi di diversi fornitori per offrirti sempre il miglior rapporto qualità-prezzo.
                 </p>
                 <div class="footer-features">
                     <div class="feature">⭐ Migliori Prezzi Garantiti</div>
@@ -44,15 +40,10 @@
             <div class="footer-column">
                 <h4 class="footer-subtitle">Contatti</h4>
                 <div class="footer-contacts">
-                    <div class="contact-item">📧 Email: info@shoponline.com</div>
-                    <div class="contact-item">📞 Telefono: +39 02 1234 5678</div>
-                    <div class="contact-item">🏢 Indirizzo: Via Roma 123, Milano</div>
-                    <div class="contact-item">🕒 Orari: Lun-Ven 9:00-18:00</div>
-                </div>
-                <div class="footer-social">
-                    <a href="#" class="social-link">📘 Facebook</a>
-                    <a href="#" class="social-link">📷 Instagram</a>
-                    <a href="#" class="social-link">🐦 Twitter</a>
+                    <div class="contact-item">📧 info@shoponline.com</div>
+                    <div class="contact-item">📞 +39 02 1234 5678</div>
+                    <div class="contact-item">🏢 Via Roma 123, Milano</div>
+                    <div class="contact-item">🕒 Lun-Ven 9:00-18:00</div>
                 </div>
             </div>
         </div>
@@ -81,7 +72,7 @@
 
 <!-- Widget Chat Bot -->
 <div id="chat-widget">
-    <div id="chat-toggle">🤖 Assistente AI</div>
+    <div id="chat-toggle">🤖 Ada Lovelace AI</div>
     <div id="chat-container">
         <div id="chat-header">
             <h4>🛍️ Assistente ShopOnline</h4>
@@ -171,7 +162,6 @@
         background: #f8f9fa;
     }
 
-
     .message-time {
         font-size: 11px;
         opacity: 0.7;
@@ -212,7 +202,6 @@
     }
 
     .typing-indicator {
-        display: none;
         padding: 10px 15px;
         background: white;
         border: 1px solid #ddd;
@@ -220,6 +209,7 @@
         margin-bottom: 15px;
         max-width: 80%;
         border-bottom-left-radius: 5px;
+        display: none;
     }
 
     .typing-dots {
@@ -235,13 +225,8 @@
         animation: typing 1.4s infinite;
     }
 
-    .typing-dots span:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-
-    .typing-dots span:nth-child(3) {
-        animation-delay: 0.4s;
-    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 
     @keyframes typing {
         0%, 60%, 100% { transform: translateY(0); }
@@ -250,125 +235,90 @@
 </style>
 
 <script>
-    // JavaScript per il widget chat
     document.addEventListener('DOMContentLoaded', function() {
-        const chatToggle = document.getElementById('chat-toggle');
-        const chatContainer = document.getElementById('chat-container');
-        const chatClose = document.getElementById('chat-close');
-        const chatInput = document.getElementById('chat-input');
-        const chatSend = document.getElementById('chat-send');
-        const chatMessages = document.getElementById('chat-messages');
-        const sessioneId = 'chat_' + Date.now();
+        const chat = {
+            toggle: document.getElementById('chat-toggle'),
+            container: document.getElementById('chat-container'),
+            close: document.getElementById('chat-close'),
+            input: document.getElementById('chat-input'),
+            send: document.getElementById('chat-send'),
+            messages: document.getElementById('chat-messages'),
+            sessionId: 'chat_' + Date.now()
+        };
 
         // Messaggio di benvenuto
         addBotMessage('Ciao! Sono l\'assistente virtuale di ShopOnline. Come posso aiutarti con i nostri prodotti di elettronica?');
 
-        chatToggle.addEventListener('click', function() {
-            chatContainer.classList.toggle('show');
-            if (chatContainer.classList.contains('show')) {
-                chatInput.focus();
+        // Event listeners
+        chat.toggle.addEventListener('click', toggleChat);
+        chat.close.addEventListener('click', () => chat.container.classList.remove('show'));
+        chat.input.addEventListener('keypress', e => e.key === 'Enter' && sendMessage());
+        chat.send.addEventListener('click', sendMessage);
+
+        function toggleChat() {
+            chat.container.classList.toggle('show');
+            if (chat.container.classList.contains('show')) {
+                chat.input.focus();
             }
-        });
-
-        // Chiudi chat
-        chatClose.addEventListener('click', function() {
-            chatContainer.classList.remove('show');
-        });
-
-        // Invia messaggio con Enter
-        chatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // Invia messaggio con click
-        chatSend.addEventListener('click', sendMessage);
+        }
 
         function sendMessage() {
-            const message = chatInput.value.trim();
-            if (message === '') return;
+            const message = chat.input.value.trim();
+            if (!message) return;
 
-            // Aggiungi messaggio utente
             addUserMessage(message);
-            chatInput.value = '';
-
-            // Mostra indicatore di typing
+            chat.input.value = '';
             showTypingIndicator();
 
-            // Invia al server
             fetch('chat_api.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    messaggio: message,
-                    sessione_id: sessioneId
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messaggio: message, sessione_id: chat.sessionId })
             })
                 .then(response => response.json())
                 .then(data => {
                     hideTypingIndicator();
-                    if (data.success) {
-                        addBotMessage(data.response);
-                    } else {
-                        addBotMessage('Mi dispiace, si è verificato un errore. Riprova.');
-                    }
+                    addBotMessage(data.success ? data.response : 'Mi dispiace, si è verificato un errore. Riprova.');
                 })
-                .catch(error => {
+                .catch(() => {
                     hideTypingIndicator();
                     addBotMessage('Errore di connessione. Riprova più tardi.');
-                    console.error('Error:', error);
                 });
         }
 
         function addUserMessage(message) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message user';
-            messageDiv.innerHTML = `
-            ${message}
-            <div class="message-time">${getCurrentTime()}</div>
-        `;
-            chatMessages.appendChild(messageDiv);
-            scrollToBottom();
+            addMessage(message, 'user');
         }
 
         function addBotMessage(message) {
+            addMessage(message, 'bot');
+        }
+
+        function addMessage(message, type) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'message bot';
-            messageDiv.innerHTML = `
-            ${message}
-            <div class="message-time">${getCurrentTime()}</div>
-        `;
-            chatMessages.appendChild(messageDiv);
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `${message}<div class="message-time">${getCurrentTime()}</div>`;
+            chat.messages.appendChild(messageDiv);
             scrollToBottom();
         }
 
         function showTypingIndicator() {
             const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
             typingDiv.id = 'typing-indicator';
-            typingDiv.innerHTML = `
-            <div class="typing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        `;
-            chatMessages.appendChild(typingDiv);
+            typingDiv.className = 'typing-indicator';
+            typingDiv.style.display = 'block';
+            typingDiv.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+            chat.messages.appendChild(typingDiv);
             scrollToBottom();
         }
 
         function hideTypingIndicator() {
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) {
-                typingIndicator.remove();
-            }
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
         }
 
         function scrollToBottom() {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chat.messages.scrollTop = chat.messages.scrollHeight;
         }
 
         function getCurrentTime() {

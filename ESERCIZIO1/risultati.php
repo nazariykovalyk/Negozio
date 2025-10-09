@@ -4,13 +4,7 @@ require_once 'functions.php';
 require_once 'auth.php';
 
 $utente_corrente = getUtenteCorrente();
-
-if ($utente_corrente) {
-    $metodi_pagamento = getMetodiPagamento($utente_corrente['id']);
-    $ha_metodi_pagamento = !empty($metodi_pagamento);
-} else {
-    $ha_metodi_pagamento = false;
-}
+$ha_metodi_pagamento = $utente_corrente && !empty(getMetodiPagamento($utente_corrente['id']));
 
 if (!isset($_SESSION['risultati_ricerca'])) {
     header('Location: index.php');
@@ -27,35 +21,12 @@ $ordini = $_SESSION['risultati_ricerca'];
     <link rel="stylesheet" type="text/css" href="css/style.css">
     <style>
         .login-prompt, .payment-prompt {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 15px 0;
-            text-align: center;
+            background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 15px 0; text-align: center;
         }
-
-        .payment-prompt {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-
-        .login-prompt a, .payment-prompt a {
-            color: #856404;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .login-prompt a:hover, .payment-prompt a:hover {
-            text-decoration: underline;
-        }
-
-        .btn-disabled {
-            background: #6c757d !important;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
+        .payment-prompt { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .login-prompt a, .payment-prompt a { color: #856404; font-weight: bold; text-decoration: none; }
+        .login-prompt a:hover, .payment-prompt a:hover { text-decoration: underline; }
+        .btn-disabled { background: #6c757d !important; cursor: not-allowed; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -82,12 +53,11 @@ $ordini = $_SESSION['risultati_ricerca'];
             <p>Puoi aggiungere articoli al carrello e confrontare i prezzi, ma per completare gli ordini devi
                 <a href="registrazione.php">registrarti</a> o <a href="login.php">accedere</a> al tuo account.</p>
         </div>
-    <?php elseif ($utente_corrente && !$ha_metodi_pagamento): ?>
+    <?php elseif (!$ha_metodi_pagamento): ?>
         <div class="payment-prompt">
             <strong>💳 Metodo di Pagamento Richiesto</strong>
             <p>Per completare gli ordini, devi aggiungere un metodo di pagamento nel tuo
                 <a href="profilo.php#metodi-pagamento">profilo</a>.</p>
-            <p><small>Puoi comunque aggiungere articoli al carrello e completare l'acquisto dopo aver aggiunto la carta.</small></p>
         </div>
     <?php endif; ?>
 
@@ -123,11 +93,7 @@ $ordini = $_SESSION['risultati_ricerca'];
                             </td>
                             <td>€<?php echo number_format($fornitore['prezzo_acquisto'], 2); ?></td>
                             <td class="sconto">
-                                <?php if ($fornitore['sconto_applicato'] > 0): ?>
-                                    <?php echo number_format($fornitore['sconto_applicato'], 1); ?>%
-                                <?php else: ?>
-                                    -
-                                <?php endif; ?>
+                                <?php echo $fornitore['sconto_applicato'] > 0 ? number_format($fornitore['sconto_applicato'], 1) . '%' : '-'; ?>
                             </td>
                             <td class="prezzo">€<?php echo number_format($fornitore['prezzo_finale'], 2); ?></td>
                             <td><?php echo $fornitore['giorni_spedizione']; ?> giorni</td>
@@ -153,14 +119,11 @@ $ordini = $_SESSION['risultati_ricerca'];
                                         <button type="submit" class="btn-ordine">Ordina Ora</button>
                                     </form>
                                 <?php else: ?>
-                                    <!-- Messaggio per utenti non loggati o senza metodi di pagamento -->
                                     <div style="text-align: center; margin-top: 5px;">
                                         <small style="color: #dc3545;">
-                                            <?php if (!$utente_corrente): ?>
-                                                ⚠️ <a href="registrazione.php" style="color: #dc3545;">Registrati</a> per ordinare
-                                            <?php else: ?>
-                                                ⚠️ <a href="profilo.php#metodi-pagamento" style="color: #dc3545;">Aggiungi carta</a> per ordinare
-                                            <?php endif; ?>
+                                            ⚠️ <a href="<?php echo !$utente_corrente ? 'registrazione.php' : 'profilo.php#metodi-pagamento'; ?>" style="color: #dc3545;">
+                                                <?php echo !$utente_corrente ? 'Registrati' : 'Aggiungi carta'; ?> per ordinare
+                                            </a>
                                         </small>
                                     </div>
                                 <?php endif; ?>
@@ -175,7 +138,6 @@ $ordini = $_SESSION['risultati_ricerca'];
 </div>
 
 <script>
-    // Previeni l'ordine se l'utente non è loggato o non ha metodi di pagamento
     document.addEventListener('DOMContentLoaded', function() {
         const ordinaButtons = document.querySelectorAll('.btn-ordine');
         ordinaButtons.forEach(button => {
@@ -184,7 +146,7 @@ $ordini = $_SESSION['risultati_ricerca'];
                 e.preventDefault();
                 alert('Devi essere registrato per effettuare ordini. Clicca su "Registrati" in alto a sinistra.');
                 window.location.href = 'registrazione.php';
-                <?php elseif ($utente_corrente && !$ha_metodi_pagamento): ?>
+                <?php elseif (!$ha_metodi_pagamento): ?>
                 e.preventDefault();
                 alert('Devi aggiungere un metodo di pagamento per effettuare ordini. Vai al tuo profilo per aggiungere una carta.');
                 window.location.href = 'profilo.php#metodi-pagamento';
@@ -195,7 +157,5 @@ $ordini = $_SESSION['risultati_ricerca'];
 </script>
 
 </body>
-<?php
-require_once 'footer.php';
-?>
+<?php require_once 'footer.php'; ?>
 </html>

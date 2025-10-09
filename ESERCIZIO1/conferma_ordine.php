@@ -2,6 +2,8 @@
 require_once 'config.php';
 require_once 'functions.php';
 require_once 'auth.php';
+
+// Controlla se l'utente è loggato per gli ordini singoli
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isUtenteLoggato()) {
     $_SESSION['error'] = "Devi essere registrato per effettuare ordini";
     header('Location: login.php');
@@ -14,11 +16,27 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    // Prepara i dati per l'ordine
+    // VERIFICA DISPONIBILITÀ PRIMA DI PROCEDERE
+    $id_articolo = $_POST['id_articolo'];
     $id_fornitore = $_POST['id_fornitore'];
+    $quantita = $_POST['quantita'];
+
+    // Controlla disponibilità
+    $conn = getDBConnection();
+    $stmt = $conn->prepare("SELECT quantita_disponibile FROM Articoli_Fornitori WHERE id_articolo = ? AND id_fornitore = ?");
+    $stmt->execute([$id_articolo, $id_fornitore]);
+    $disponibilita = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$disponibilita || $disponibilita['quantita_disponibile'] < $quantita) {
+        $_SESSION['error'] = "Quantità non disponibile. Il fornitore non ha abbastanza articoli in stock.";
+        header('Location: risultati.php');
+        exit;
+    }
+
+    // Prepara e salva ordine
     $dettaglio_ordine = [
-            'id_articolo' => $_POST['id_articolo'],
-            'quantita' => $_POST['quantita'],
+            'id_articolo' => $id_articolo,
+            'quantita' => $quantita,
             'prezzo_unitario' => $_POST['prezzo_unitario'],
             'sconto_applicato' => $_POST['sconto_applicato'],
             'prezzo_finale' => $_POST['prezzo_finale'],
@@ -26,10 +44,8 @@ try {
     ];
 
     $id_ordine = salvaOrdine($id_fornitore, [$dettaglio_ordine]);
-
     $dettagli_ordine = getDettagliOrdine($id_ordine);
-
-    aggiornaSessionDopoOrdine($_POST['id_articolo'], $_POST['id_fornitore'], $_POST['quantita']);
+    aggiornaSessionDopoOrdine($id_articolo, $id_fornitore, $quantita);
 
 } catch (Exception $e) {
     $errore = "Errore durante il salvataggio dell'ordine: " . $e->getMessage();
@@ -41,7 +57,6 @@ try {
     <meta charset="UTF-8">
     <title>Conferma Ordine - Sistema Acquisti</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
-
 </head>
 <body>
 <div class="container">
@@ -61,7 +76,6 @@ try {
 
         <div class="ordine-info">
             <h2>Dettagli Ordine #<?php echo $id_ordine; ?></h2>
-
             <p><strong>Data ordine:</strong> <?php echo $dettagli_ordine[0]['data_ordine']; ?></p>
             <p><strong>Fornitore:</strong> <?php echo htmlspecialchars($dettagli_ordine[0]['nome_fornitore']); ?></p>
             <p><strong>Tempo di spedizione stimato:</strong> <?php echo $dettagli_ordine[0]['giorni_spedizione']; ?> giorni lavorativi</p>
@@ -103,7 +117,5 @@ try {
     <?php endif; ?>
 </div>
 </body>
-<?php
-require_once 'footer.php';
-?>
+<?php require_once 'footer.php'; ?>
 </html>

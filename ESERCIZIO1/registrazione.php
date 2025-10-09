@@ -44,140 +44,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     <meta charset="UTF-8">
     <title>Registrazione - ShopOnline</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .register-container {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo h1 {
-            color: #333;
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-
-        .logo p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        input[type="email"],
-        input[type="password"],
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn:hover {
-            background: #5a6fd8;
-        }
-
-        .links {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .links a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .links a:hover {
-            text-decoration: underline;
-        }
-
-        .alert {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .alert-error {
-            background: #fee;
-            color: #c33;
-            border: 1px solid #fcc;
-        }
-
-        .alert-success {
-            background: #efe;
-            color: #3c3;
-            border: 1px solid #cfc;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        @media (max-width: 480px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .register-container {
-                padding: 20px;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .register-container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); width: 100%; max-width: 500px; }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #333; font-size: 28px; margin-bottom: 5px; }
+        .logo p { color: #666; font-size: 14px; }
+        .form-group { margin-bottom: 20px; position: relative; }
+        label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
+        input, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; transition: border-color 0.3s; }
+        input:focus, textarea:focus { outline: none; border-color: #667eea; }
+        input[type="password"], input[type="text"].password-field { padding-right: 45px; }
+        .btn { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+        .btn:hover { background: #5a6fd8; }
+        .links { text-align: center; margin-top: 20px; }
+        .links a { color: #667eea; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+        .alert { padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
+        .alert-error { background: #fee; color: #c33; border: 1px solid #fcc; }
+        .alert-success { background: #efe; color: #3c3; border: 1px solid #cfc; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .password-toggle { position: absolute; right: 0px; top: 25px; background: transparent; border: none; cursor: pointer; font-size: 20px; padding: 8px; z-index: 10; transition: opacity 0.3s; }
+        .password-toggle:hover { opacity: 0.7; }
+        @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } .register-container { padding: 20px; } }
     </style>
 </head>
 <body>
@@ -199,18 +88,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         <div class="form-row">
             <div class="form-group">
                 <label for="nome">Nome</label>
-                <input type="text" id="nome" name="nome" required value="<?php echo isset($_POST['nome']) ? htmlspecialchars($_POST['nome']) : ''; ?>">
+                <input type="text" id="nome" name="nome" required value="<?php echo htmlspecialchars($_POST['nome'] ?? ''); ?>">
             </div>
-
             <div class="form-group">
                 <label for="cognome">Cognome</label>
-                <input type="text" id="cognome" name="cognome" required value="<?php echo isset($_POST['cognome']) ? htmlspecialchars($_POST['cognome']) : ''; ?>">
+                <input type="text" id="cognome" name="cognome" required value="<?php echo htmlspecialchars($_POST['cognome'] ?? ''); ?>">
             </div>
         </div>
 
         <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+            <input type="email" id="email" name="email" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
         </div>
 
         <div class="form-row">
@@ -218,7 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
             </div>
-
             <div class="form-group">
                 <label for="conferma_password">Conferma Password</label>
                 <input type="password" id="conferma_password" name="conferma_password" required>
@@ -227,17 +114,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
         <div class="form-group">
             <label for="telefono">Telefono (opzionale)</label>
-            <input type="text" id="telefono" name="telefono" value="<?php echo isset($_POST['telefono']) ? htmlspecialchars($_POST['telefono']) : ''; ?>">
+            <input type="text" id="telefono" name="telefono" value="<?php echo htmlspecialchars($_POST['telefono'] ?? ''); ?>">
         </div>
 
         <div class="form-group">
-            <label for="indirizzo">Indirizzo (opzionale)</label>
-            <textarea id="indirizzo" name="indirizzo" rows="2"><?php echo isset($_POST['indirizzo']) ? htmlspecialchars($_POST['indirizzo']) : ''; ?></textarea>
+            <label for="indirizzo">Indirizzo</label>
+            <textarea id="indirizzo" name="indirizzo" rows="2" required><?php echo htmlspecialchars($_POST['indirizzo'] ?? ''); ?></textarea>
         </div>
 
         <div class="form-group">
             <label for="citta">Città (opzionale)</label>
-            <input type="text" id="citta" name="citta" value="<?php echo isset($_POST['citta']) ? htmlspecialchars($_POST['citta']) : ''; ?>">
+            <input type="text" id="citta" name="citta" value="<?php echo htmlspecialchars($_POST['citta'] ?? ''); ?>">
         </div>
 
         <button type="submit" name="register" class="btn">Registrati</button>
@@ -248,5 +135,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         <p><a href="index.php">← Torna allo shopping</a></p>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const passwordFields = ['password', 'conferma_password'];
+
+        passwordFields.forEach(fieldId => {
+            const passwordField = document.getElementById(fieldId);
+            if (!passwordField) return;
+
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'password-toggle';
+            toggle.innerHTML = '👁️';
+            toggle.setAttribute('aria-label', 'Mostra password');
+
+            passwordField.closest('.form-group').appendChild(toggle);
+
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isPassword = passwordField.type === 'password';
+
+                passwordField.type = isPassword ? 'text' : 'password';
+                passwordField.classList.toggle('password-field', isPassword);
+                toggle.innerHTML = isPassword ? '️‍️‍👁️‍🗨' : '👁️';
+                toggle.setAttribute('aria-label', isPassword ? 'Nascondi password' : 'Mostra password');
+            });
+
+            toggle.addEventListener('mousedown', (e) => e.preventDefault());
+        });
+    });
+</script>
 </body>
 </html>

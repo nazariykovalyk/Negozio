@@ -4,7 +4,6 @@ require_once 'auth.php';
 require_once 'functions.php';
 
 $error = '';
-$success = '';
 
 // Redirect se già loggato
 if (isUtenteLoggato()) {
@@ -26,20 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         $error = $result['message'];
     }
 }
-// Gestione login
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-
-    $result = loginUtente($email, $password);
-
-    if ($result['success']) {
-        header('Location: index.php');
-        exit;
-    } else {
-        $error = $result['message'];
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -47,121 +32,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     <meta charset="UTF-8">
     <title>Login - ShopOnline</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo h1 {
-            color: #333;
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-
-        .logo p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="email"]:focus,
-        input[type="password"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn:hover {
-            background: #5a6fd8;
-        }
-
-        .links {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .links a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .links a:hover {
-            text-decoration: underline;
-        }
-
-        .alert {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .alert-error {
-            background: #fee;
-            color: #c33;
-            border: 1px solid #fcc;
-        }
-
-        .alert-success {
-            background: #efe;
-            color: #3c3;
-            border: 1px solid #cfc;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); width: 100%; max-width: 400px; }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #333; font-size: 28px; margin-bottom: 5px; }
+        .logo p { color: #666; font-size: 14px; }
+        .form-group { margin-bottom: 20px; position: relative; }
+        label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
+        input[type="email"], input[type="password"], input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; transition: border-color 0.3s; font-family: inherit; }
+        input:focus { outline: none; border-color: #667eea; }
+        input[type="password"], input[type="text"].password-field { padding-right: 45px !important; }
+        .btn { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+        .btn:hover { background: #5a6fd8; }
+        .links { text-align: center; margin-top: 20px; }
+        .links a { color: #667eea; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+        .alert { padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
+        .alert-error { background: #fee; color: #c33; border: 1px solid #fcc; }
+        .alert-success { background: #efe; color: #3c3; border: 1px solid #cfc; }
+        .password-toggle { position: absolute; right: 0px; top: 29px; background: transparent; border: none; cursor: pointer; font-size: 20px; padding: 8px; z-index: 10; transition: opacity 0.3s; line-height: 1; }
+        .password-toggle:hover { opacity: 0.7; }
+        .password-toggle:focus { outline: 2px solid #667eea; outline-offset: 2px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -173,10 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
     <?php if ($error): ?>
         <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-    <?php endif; ?>
-
-    <?php if ($success): ?>
-        <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
     <?php endif; ?>
 
     <form method="POST" action="">
@@ -198,5 +86,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         <p><a href="index.php">← Torna allo shopping</a></p>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const passwordField = document.getElementById('password');
+        if (!passwordField) return;
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'password-toggle';
+        toggle.innerHTML = '👁️';
+        toggle.setAttribute('aria-label', 'Mostra password');
+
+        passwordField.closest('.form-group').appendChild(toggle);
+
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isPassword = passwordField.type === 'password';
+
+            passwordField.type = isPassword ? 'text' : 'password';
+            passwordField.classList.toggle('password-field', isPassword);
+            toggle.innerHTML = isPassword ? '️‍️‍👁️‍🗨' : '👁️';
+            toggle.setAttribute('aria-label', isPassword ? 'Nascondi password' : 'Mostra password');
+        });
+
+        toggle.addEventListener('mousedown', (e) => e.preventDefault());
+    });
+</script>
 </body>
 </html>

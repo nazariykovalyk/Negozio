@@ -25,6 +25,197 @@ html { scroll-behavior: smooth; }
 body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--dark); line-height: 1.6; }
 
 /* ========================================
+   PASSWORD TOGGLE STYLES
+   ======================================== */
+
+:root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --light: #ecf0f1;
+    --danger: #e74c3c;
+    --border-radius: 8px;
+    --shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.auth-card {
+    background: white;
+    width: 100%;
+    max-width: 450px;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.auth-card h2 {
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+    position: relative; /* Aggiunto per il toggle password */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--secondary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* Stili per il toggle password */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 72%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.password-toggle:hover {
+    background: rgba(52, 152, 219, 0.1);
+}
+
+/* Aggiungi padding extra ai campi password */
+input[type="password"] {
+    padding-right: 45px !important;
+}
+
+.btn {
+    display: inline-block;
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--secondary);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.auth-links {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.auth-links a {
+    color: var(--secondary);
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 0.5rem;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+.alert {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+}
+
+.alert.error {
+    background-color: #fdecea;
+    color: var(--danger);
+    border-left: 4px solid var(--danger);
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 1.5rem;
+    }
+
+    .password-toggle {
+        right: 12px;
+        top: 70%;
+    }
+}
+
+/* ========================================
+   VARIABILI E RESET
+   ======================================== */
+:root {
+    --primary: #232f3e;
+    --secondary: #ff9900;
+    --success: #28a745;
+    --danger: #ff4d4d;
+    --warning: #ffc107;
+    --info: #0066c0;
+    --light: #f5f5f5;
+    --white: #fff;
+    --dark: #0F1111;
+    --gray: #565959;
+    --border: #ddd;
+    --price: #B12704;
+    --radius: 8px;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,.1);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.15);
+    --transition: all .3s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--dark); line-height: 1.6; }
+
+/* ========================================
    HEADER
    ======================================== */
 .header {
@@ -153,7 +344,23 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var
 /* ========================================
    BUTTONS
    ======================================== */
-.btn { padding: 10px 20px; border: 0; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; font-weight: 600; transition: var(--transition); font-size: 14px; }
+/* ========================================
+   BUTTONS
+   ======================================== */
+.btn {
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    font-weight: 600;
+    transition: var(--transition);
+    font-size: 14px;
+    width: auto; /* AGGIUNTO: impedisce di espandersi */
+    min-width: auto; /* AGGIUNTO: rimuove larghezza minima */
+}
 .btn:active { transform: scale(.98); }
 
 .btn-primary { background: var(--secondary); color: var(--dark); }
@@ -287,6 +494,9 @@ label { font-weight: 600; color: var(--dark); font-size: 14px; }
 /* ========================================
    TABLES
    ======================================== */
+/* ========================================
+   TABLES
+   ======================================== */
 table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
 th { background-color: var(--primary); color: var(--white); padding: 16px; text-align: left; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .5px; }
 td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
@@ -297,6 +507,25 @@ tfoot { background-color: #f8f9fa; font-weight: 600; }
 tfoot td { padding: 16px; }
 .prezzo { font-weight: 700; color: var(--success); }
 .sconto { color: var(--danger); font-weight: 600; }
+
+/* FIX PER I BOTTONI NELLE TABELLE */
+.form-ordine {
+    display: inline-block;
+    width: auto;
+    margin: 0;
+}
+
+.form-ordine button {
+    width: auto;
+    min-width: 140px;
+    white-space: nowrap;
+    margin: 2px 0;
+}
+
+/* Assicura che la colonna Azioni non sia troppo stretta */
+td:last-child {
+    min-width: 160px;
+}
 
 /* ========================================
    STATES
@@ -355,7 +584,6 @@ tfoot td { padding: 16px; }
     .ordine-info { background: linear-gradient(135deg, #1f2937 0%, #374151 100%); box-shadow: 0 2px 8px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.2); }
     .ordine-info p { color: #d1d5db; }
 }
-
 /* ========================================
    FOOTER
    ======================================== */
@@ -459,4 +687,128 @@ tfoot td { padding: 16px; }
     .ordine-info { padding: 20px; margin: 20px 0; border-left-width: 3px; }
     .ordine-info h2 { font-size: 18px; margin-bottom: 18px; }
     .ordine-info p { font-size: 14px; margin-bottom: 12px; }
+}
+/* Header Styles */
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-right: auto;
+}
+
+.user-info {
+    color: white;
+    font-size: 14px;
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-auth {
+    padding: 8px 16px;
+    background: #ff9900;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.btn-auth:hover {
+    background: #e68900;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #ff9900;
+}
+
+.btn-outline:hover {
+    background: #ff9900;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ff9900;
+    margin-right: auto;
+}
+
+/* Message Styles */
+.welcome-message, .guest-message {
+    text-align: center;
+    background: #e7f3ff;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border-left: 4px solid #007bff;
+}
+
+.guest-message {
+    border-left-color: #17a2b8;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    color: #232f3e;
+    margin-bottom: 10px;
+}
+
+.page-header p {
+    color: #666;
+    font-size: 16px;
+}
+
+/* Search Results */
+.search-results-info {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.search-results-info span {
+    color: #ff9900;
+}
+
+/* Form Actions */
+.form-actions, .cart-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.btn-large {
+    padding: 15px 30px;
+    font-size: 18px;
+}
+
+.info-note {
+    margin-top: 10px;
+    color: #17a2b8;
+    font-size: 14px;
+}
+
+/* Header Carrello */
+.header-carrello a {
+    background: #232f3e;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
 }

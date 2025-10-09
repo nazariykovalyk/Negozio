@@ -15,21 +15,13 @@ function registraUtente($email, $password, $nome, $cognome, $ruolo = 'cliente', 
             return ['success' => false, 'message' => 'Email già registrata'];
         }
 
-        // Hash della password con bcrypt
         $password_hash = password_hash($password, PASSWORD_BCRYPT);
+        $stmt = $conn->prepare("INSERT INTO Utenti (email, password_hash, nome, cognome, ruolo, telefono, indirizzo, citta) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
-        $stmt = $conn->prepare("
-            INSERT INTO Utenti (email, password_hash, nome, cognome, ruolo, telefono, indirizzo, citta) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-
-        $success = $stmt->execute([$email, $password_hash, $nome, $cognome, $ruolo, $telefono, $indirizzo, $citta]);
-
-        if ($success) {
+        if ($stmt->execute([$email, $password_hash, $nome, $cognome, $ruolo, $telefono, $indirizzo, $citta])) {
             return ['success' => true, 'message' => 'Registrazione completata'];
-        } else {
-            return ['success' => false, 'message' => 'Errore durante la registrazione'];
         }
+        return ['success' => false, 'message' => 'Errore durante la registrazione'];
 
     } catch (PDOException $e) {
         return ['success' => false, 'message' => 'Errore database: ' . $e->getMessage()];
@@ -41,11 +33,7 @@ function loginUtente($email, $password) {
     $conn = getDBConnection();
 
     try {
-        $stmt = $conn->prepare("
-            SELECT id_utente, email, password_hash, nome, cognome, ruolo, attivo 
-            FROM Utenti 
-            WHERE email = ? AND attivo = 1
-        ");
+        $stmt = $conn->prepare("SELECT id_utente, email, password_hash, nome, cognome, ruolo, attivo FROM Utenti WHERE email = ? AND attivo = 1");
         $stmt->execute([$email]);
         $utente = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -61,14 +49,12 @@ function loginUtente($email, $password) {
             $_SESSION['user_cognome'] = $utente['cognome'];
             $_SESSION['user_ruolo'] = $utente['ruolo'];
 
-            // CARICA IL CARRELLO SALVATO dal database
-            $carrello_salvato = caricaCarrelloDatabase($utente['id_utente']);
-            $_SESSION['carrello'] = $carrello_salvato;
+            // Carica il carrello salvato
+            $_SESSION['carrello'] = caricaCarrelloDatabase($utente['id_utente']);
 
             return ['success' => true, 'message' => 'Login effettuato', 'user' => $utente];
-        } else {
-            return ['success' => false, 'message' => 'Email o password errati'];
         }
+        return ['success' => false, 'message' => 'Email o password errati'];
 
     } catch (PDOException $e) {
         return ['success' => false, 'message' => 'Errore database: ' . $e->getMessage()];
@@ -81,7 +67,6 @@ function logoutUtente() {
         salvaCarrelloDatabase($_SESSION['user_id'], $_SESSION['carrello']);
     }
 
-    // Distruggi completamente la sessione
     session_destroy();
     session_start();
 
@@ -95,16 +80,13 @@ function isUtenteLoggato() {
 
 // Ottieni dati utente corrente
 function getUtenteCorrente() {
-    if (isUtenteLoggato()) {
-        return [
-            'id' => $_SESSION['user_id'],
-            'email' => $_SESSION['user_email'],
-            'nome' => $_SESSION['user_nome'],
-            'cognome' => $_SESSION['user_cognome'],
-            'ruolo' => $_SESSION['user_ruolo']
-        ];
-    }
-    return null;
+    return isUtenteLoggato() ? [
+        'id' => $_SESSION['user_id'],
+        'email' => $_SESSION['user_email'],
+        'nome' => $_SESSION['user_nome'],
+        'cognome' => $_SESSION['user_cognome'],
+        'ruolo' => $_SESSION['user_ruolo']
+    ] : null;
 }
 
 // Cambia password
@@ -124,13 +106,11 @@ function cambiaPasswordUtente($id_utente, $vecchia_password, $nuova_password) {
         // Aggiorna password
         $nuova_password_hash = password_hash($nuova_password, PASSWORD_BCRYPT);
         $stmt = $conn->prepare("UPDATE Utenti SET password_hash = ? WHERE id_utente = ?");
-        $success = $stmt->execute([$nuova_password_hash, $id_utente]);
 
-        if ($success) {
+        if ($stmt->execute([$nuova_password_hash, $id_utente])) {
             return ['success' => true, 'message' => 'Password cambiata con successo'];
-        } else {
-            return ['success' => false, 'message' => 'Errore durante il cambio password'];
         }
+        return ['success' => false, 'message' => 'Errore durante il cambio password'];
 
     } catch (PDOException $e) {
         return ['success' => false, 'message' => 'Errore database: ' . $e->getMessage()];
@@ -140,7 +120,6 @@ function cambiaPasswordUtente($id_utente, $vecchia_password, $nuova_password) {
 // Ottieni utente by ID
 function getUtenteById($id_utente) {
     $conn = getDBConnection();
-
     $stmt = $conn->prepare("SELECT * FROM Utenti WHERE id_utente = ?");
     $stmt->execute([$id_utente]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
