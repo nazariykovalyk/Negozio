@@ -96,6 +96,6 @@ Per il deployment sono richiesti server web Apache o Nginx con supporto PHP 8.0+
 
 La piattaforma include strumenti completi per il monitoring adella salute del sistema e documentazione tecnica esaustiva per sviluppatori e amministratori di sistema.
 
-#Link utili
+# Link utili
 Analisi TDD/BDD: https://1drv.ms/w/c/6388146e8998ea37/EeTdq6jOC01JmaTNrGXKwFUBtOvAWouezlDUN0C0bPkpdw?e=H1H8fs
 
