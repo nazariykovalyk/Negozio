@@ -98,4 +98,5 @@ La piattaforma include strumenti completi per il monitoring adella salute del si
 
 # Link utili
 Analisi TDD/BDD: https://1drv.ms/w/c/6388146e8998ea37/EeTdq6jOC01JmaTNrGXKwFUBtOvAWouezlDUN0C0bPkpdw?e=H1H8fs
+Manuale d'Uso: https://1drv.ms/w/c/6388146e8998ea37/ETh6n8Ev1YVLkywqvoHR5rMBtsGHlETpECgg_Qfh40zCQA?e=pl8Gii
 
