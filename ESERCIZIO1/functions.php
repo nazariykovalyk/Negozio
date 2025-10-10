@@ -4,8 +4,25 @@ require_once 'config.php';
 // Ottieni tutti gli articoli disponibili
 function getArticoli() {
     $conn = getDBConnection();
-    $stmt = $conn->query("SELECT * FROM Articoli ORDER BY nome");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $stmt = $conn->query("
+            SELECT 
+                a.id_articolo, 
+                a.nome, 
+                a.SKU, 
+                a.descrizione,
+                a.prezzo_vendita,
+                MIN(af.prezzo_acquisto) as prezzo_unitario
+            FROM Articoli a
+            LEFT JOIN Articoli_Fornitori af ON a.id_articolo = af.id_articolo
+            GROUP BY a.id_articolo, a.nome, a.SKU, a.descrizione, a.prezzo_vendita
+            ORDER BY a.nome ASC
+        ");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Errore recupero articoli: " . $e->getMessage());
+        return [];
+    }
 }
 
 // Calcola sconto per un fornitore
@@ -356,9 +373,11 @@ function getMetodoPreferito($id_utente) {
     }
 }
 
+// Aggiungi nuovo metodo di pagamento
 function aggiungiMetodoPagamento($id_utente, $dati_metodo) {
     $conn = getDBConnection();
     try {
+        // Validazione base
         if (empty($dati_metodo['tipo']) || empty($dati_metodo['titolare'])) {
             return ['success' => false, 'message' => 'Tipo di pagamento e titolare sono obbligatori'];
         }
@@ -368,41 +387,81 @@ function aggiungiMetodoPagamento($id_utente, $dati_metodo) {
             if (empty($dati_metodo['numero_carta']) || empty($dati_metodo['scadenza']) || empty($dati_metodo['cvv'])) {
                 return ['success' => false, 'message' => 'Tutti i campi della carta sono obbligatori'];
             }
+
+            // CONVERSIONE FORMATO DATA: da YYYY-MM a YYYY-MM-DD
+            if (!empty($dati_metodo['scadenza']) && strlen($dati_metodo['scadenza']) === 7) {
+                $dati_metodo['scadenza'] = $dati_metodo['scadenza'] . '-01';
+            }
+
             // Verifica se la carta è già registrata
             $stmt = $conn->prepare("SELECT id_metodo FROM MetodiPagamento WHERE numero_carta = ? AND id_utente = ?");
             $stmt->execute([$dati_metodo['numero_carta'], $id_utente]);
-            if ($stmt->fetch()) return ['success' => false, 'message' => 'Questa carta è già registrata'];
+            if ($stmt->fetch()) {
+                return ['success' => false, 'message' => 'Questa carta è già registrata'];
+            }
 
             // Verifica scadenza
-            $scadenza = DateTime::createFromFormat('Y-m', $dati_metodo['scadenza']);
-            if ($scadenza < new DateTime()) return ['success' => false, 'message' => 'La carta è scaduta'];
+            if (!empty($dati_metodo['scadenza'])) {
+                $scadenza = DateTime::createFromFormat('Y-m-d', $dati_metodo['scadenza']);
+                $oggi = new DateTime();
+                // Imposta la scadenza all'ultimo giorno del mese per una verifica corretta
+                $scadenza->modify('last day of this month');
+                if ($scadenza < $oggi) {
+                    return ['success' => false, 'message' => 'La carta è scaduta'];
+                }
+            }
         }
         elseif ($dati_metodo['tipo'] === 'paypal') {
-            if (empty($dati_metodo['email_paypal'])) return ['success' => false, 'message' => 'Email PayPal è obbligatoria'];
+            if (empty($dati_metodo['email_paypal'])) {
+                return ['success' => false, 'message' => 'Email PayPal è obbligatoria'];
+            }
+
+            // Verifica se l'email PayPal è già registrata
             $stmt = $conn->prepare("SELECT id_metodo FROM MetodiPagamento WHERE email_paypal = ? AND id_utente = ?");
             $stmt->execute([$dati_metodo['email_paypal'], $id_utente]);
-            if ($stmt->fetch()) return ['success' => false, 'message' => 'Questo indirizzo PayPal è già registrato'];
+            if ($stmt->fetch()) {
+                return ['success' => false, 'message' => 'Questo indirizzo PayPal è già registrato'];
+            }
         }
         elseif ($dati_metodo['tipo'] === 'bonifico') {
-            if (empty($dati_metodo['iban'])) return ['success' => false, 'message' => 'IBAN è obbligatorio'];
+            if (empty($dati_metodo['iban'])) {
+                return ['success' => false, 'message' => 'IBAN è obbligatorio'];
+            }
+
+            // Verifica se l'IBAN è già registrato
             $stmt = $conn->prepare("SELECT id_metodo FROM MetodiPagamento WHERE iban = ? AND id_utente = ?");
             $stmt->execute([$dati_metodo['iban'], $id_utente]);
-            if ($stmt->fetch()) return ['success' => false, 'message' => 'Questo IBAN è già registrato'];
+            if ($stmt->fetch()) {
+                return ['success' => false, 'message' => 'Questo IBAN è già registrato'];
+            }
         }
 
+        // Se è il primo metodo, imposta come preferito
         $metodi_esistenti = getMetodiPagamento($id_utente);
         $preferito = empty($metodi_esistenti) ? true : ($dati_metodo['preferito'] ?? false);
 
+        // Se si imposta come preferito, rimuovi preferito dagli altri
         if ($preferito) {
             $stmt = $conn->prepare("UPDATE MetodiPagamento SET preferito = FALSE WHERE id_utente = ?");
             $stmt->execute([$id_utente]);
         }
 
-        $stmt = $conn->prepare("INSERT INTO MetodiPagamento (id_utente, tipo, titolare, numero_carta, scadenza, cvv, email_paypal, iban, preferito) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("
+            INSERT INTO MetodiPagamento 
+            (id_utente, tipo, titolare, numero_carta, scadenza, cvv, email_paypal, iban, preferito) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
         $success = $stmt->execute([
-            $id_utente, $dati_metodo['tipo'], $dati_metodo['titolare'],
-            $dati_metodo['numero_carta'] ?? null, $dati_metodo['scadenza'] ?? null, $dati_metodo['cvv'] ?? null,
-            $dati_metodo['email_paypal'] ?? null, $dati_metodo['iban'] ?? null, $preferito
+            $id_utente,
+            $dati_metodo['tipo'],
+            $dati_metodo['titolare'],
+            $dati_metodo['numero_carta'] ?? null,
+            $dati_metodo['scadenza'] ?? null,
+            $dati_metodo['cvv'] ?? null,
+            $dati_metodo['email_paypal'] ?? null,
+            $dati_metodo['iban'] ?? null,
+            $preferito
         ]);
 
         return $success ?

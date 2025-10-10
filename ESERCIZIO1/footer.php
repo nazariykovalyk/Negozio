@@ -21,7 +21,6 @@
                     <li><a href="index.php" class="footer-link">🏠 Homepage</a></li>
                     <li><a href="carrello.php" class="footer-link">🛒 Il mio Carrello</a></li>
                     <li><a href="profilo.php" class="footer-link">👤 Il mio Profilo</a></li>
-                    <li><a href="login.php" class="footer-link">🔐 Area Riservata</a></li>
                 </ul>
             </div>
 
@@ -72,7 +71,7 @@
 
 <!-- Widget Chat Bot -->
 <div id="chat-widget">
-    <div id="chat-toggle">🤖 Ada Lovelace AI</div>
+    <div id="chat-toggle">🤖 Ada AI</div>
     <div id="chat-container">
         <div id="chat-header">
             <h4>🛍️ Assistente ShopOnline</h4>

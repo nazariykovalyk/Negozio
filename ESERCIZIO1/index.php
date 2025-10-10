@@ -110,7 +110,7 @@ if ($termine_ricerca) {
 
                         <div class="product-name"><?php echo htmlspecialchars($articolo['nome']); ?></div>
                         <div class="product-sku">SKU: <?php echo htmlspecialchars($articolo['SKU']); ?></div>
-                        <div class="product-price">€<?php echo number_format($articolo['prezzo_vendita'], 2); ?></div>
+                        <div class="product-price">€<?php echo number_format($articolo['prezzo_unitario'], 2); ?></div>
                         <div class="product-description">
                             <?php echo htmlspecialchars(truncateDescription($articolo['descrizione'] ?? '', 100)); ?>
                         </div>
