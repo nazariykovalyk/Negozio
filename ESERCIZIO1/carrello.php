@@ -2,7 +2,7 @@
 require_once 'config.php';
 require_once 'functions.php';
 require_once 'auth.php';
-
+// GESTIONE RICHIESTE POST (azioni sul carrello)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['aggiorna_quantita'])) {
         aggiornaQuantitaCarrello($_POST['index'], intval($_POST['quantita']));
@@ -19,37 +19,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: login.php');
             exit;
         }
-
         $utente_corrente = getUtenteCorrente();
         if (!haMetodiPagamento($utente_corrente['id'])) {
             $_SESSION['error'] = "Devi aggiungere un metodo di pagamento prima di procedere all'acquisto";
             header('Location: profilo.php#metodi-pagamento');
             exit;
         }
-
-        // Verifica disponibilità
         $carrello = getCarrello();
         $errori_disponibilita = verificaDisponibilitaCarrello($carrello);
-
         if (!empty($errori_disponibilita)) {
             $errore = "Alcuni articoli non sono più disponibili:<br>" . implode("<br>", $errori_disponibilita);
-        } else {
+        }
+        // Se tutto è OK, procedi con l'elaborazione dell'ordine
+        else {
             try {
                 $id_ordini = processaOrdineCarrello();
+
+                // Salva gli ID ordine in sessione per la pagina di conferma
                 $_SESSION['ordine_completato'] = $id_ordini;
+
+                // Reindirizza alla pagina di conferma ordine
                 header('Location: ordine_completato.php');
                 exit;
+
             } catch (Exception $e) {
+                // Gestione errori durante l'elaborazione dell'ordine
                 $errore = "Errore durante l'ordine: " . $e->getMessage();
             }
         }
     }
 }
 
+// RECUPERO DATI PER LA VISUALIZZAZIONE DELLA PAGINA
+
 $carrello = getCarrello();
 $totale = calcolaTotaleCarrello();
 $conta_articoli = contaArticoliCarrello();
 $utente_corrente = getUtenteCorrente();
+
+// Verifica se l'utente ha metodi di pagamento registrati
 $ha_metodi_pagamento = $utente_corrente ? haMetodiPagamento($utente_corrente['id']) : false;
 ?>
 <!DOCTYPE html>

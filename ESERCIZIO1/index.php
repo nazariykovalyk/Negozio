@@ -1,15 +1,19 @@
 <?php
+
+//SHOP ONLINE - Pagina principale - Home page con elenco prodotti e ricerca
+//Inclusione file di configurazione e funzioni principali
 require_once 'config.php';
 require_once 'functions.php';
 require_once 'auth.php';
 
-// Carica e filtra articoli
+//Dati iniziali
+$utenteCorrente = getUtenteCorrente();
+$termineRicerca = isset($_GET['cerca']) && (!empty($_GET['cerca'])) ? trim($_GET['cerca']) : '';
 $articoli = getArticoli();
-$termine_ricerca = isset($_GET['cerca']) && !empty($_GET['cerca']) ? trim($_GET['cerca']) : '';
-$utente_corrente = getUtenteCorrente();
 
-if ($termine_ricerca) {
-    $articoli = filtraArticoli($articoli, $termine_ricerca);
+//Filtro di ricerca (se non è vuoto)
+if (!empty($termineRicerca)) {
+    $articoli = filtraArticoli($articoli, $termineRicerca);
 }
 ?>
 <!DOCTYPE html>
@@ -17,110 +21,144 @@ if ($termine_ricerca) {
 <head>
     <meta charset="UTF-8">
     <title>Shop Online - Sistema Acquisti</title>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- Icona Carrello sempre visibile -->
-<div class="header-carrello">
-    <a href="carrello.php">
-        🛒 Carrello
-        <?php if (contaArticoliCarrello() > 0): ?>
-            <span class="badge-carrello"><?php echo contaArticoliCarrello(); ?></span>
-        <?php endif; ?>
-    </a>
-</div>
-
-<!-- Header con logo e menu utente -->
-<div class="header">
+<!--SEZIONE HEADER E MENU UTENTE-->
+<header class="header">
     <div class="header-content">
+
+        <!-- Logo -->
         <div class="logo">🛍️ ShopOnline</div>
+
+        <!-- Menu utente -->
         <div class="user-menu">
-            <?php if ($utente_corrente): ?>
-                <!-- Utente loggato -->
-                <div class="user-info">Ciao, <strong><?php echo htmlspecialchars($utente_corrente['nome']); ?></strong></div>
+            <?php if ($utenteCorrente): ?>
+                <div class="user-info">
+                    Ciao, <strong><?= htmlspecialchars($utenteCorrente['nome']); ?></strong>
+                </div>
                 <div class="user-actions">
                     <a href="profilo.php" class="btn-auth btn-outline">👤 Profilo</a>
                     <a href="logout.php" class="btn-auth">🚪 Logout</a>
                 </div>
             <?php else: ?>
-                <!-- Utente non loggato -->
                 <div class="user-actions">
                     <a href="login.php" class="btn-auth btn-outline">🔐 Login</a>
                     <a href="registrazione.php" class="btn-auth">📝 Registrati</a>
                 </div>
             <?php endif; ?>
         </div>
-    </div>
-</div>
 
-<div class="container">
-    <!-- Messaggio di benvenuto personalizzato -->
-    <div class="<?php echo $utente_corrente ? 'welcome-message' : 'guest-message'; ?>">
-        <h3>👋 <?php echo $utente_corrente ? "Bentornato, " . htmlspecialchars($utente_corrente['nome']) : "Benvenuto Ospite!"; ?>!</h3>
+        <!-- Icona carrello -->
+        <div class="header-carrello">
+            <a href="carrello.php">
+                🛒 Carrello
+                <?php if (contaArticoliCarrello() > 0): ?>
+                    <span class="badge-carrello"><?= contaArticoliCarrello(); ?></span>
+                <?php endif; ?>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!--SEZIONE PRINCIPALE-->
+<main class="container">
+
+    <!-- Messaggio di benvenuto -->
+    <section class="<?= $utenteCorrente ? 'welcome-message' : 'guest-message'; ?>">
+        <h3>
+            👋 <?= $utenteCorrente
+                    ? "Bentornato, " . htmlspecialchars($utenteCorrente['nome'])
+                    : "Benvenuto Ospite!"; ?>
+        </h3>
         <p>
-            <?php echo $utente_corrente
-                    ? "Pronto per trovare le migliori offerte? Cerca i prodotti che ti interessano e confronta i prezzi tra i fornitori."
-                    : "Puoi cercare prodotti, confrontare i prezzi dei fornitori e aggiungere articoli al carrello. <strong>Registrati</strong> per completare gli acquisti!"; ?>
+            <?= $utenteCorrente
+                    ? "Pronto per trovare le migliori offerte? Cerca i prodotti e confronta i prezzi tra fornitori."
+                    : "Puoi cercare prodotti, confrontare i prezzi e aggiungerli al carrello. <strong>Registrati</strong> per completare gli acquisti!"; ?>
         </p>
-    </div>
+    </section>
 
-    <!-- Intestazione pagina e barra di ricerca -->
-    <div class="page-header">
+    <!-- Intestazione pagina -->
+    <header class="page-header">
         <h1>Benvenuto nel nostro Shop</h1>
         <p>Trova i prodotti migliori al prezzo più conveniente</p>
-    </div>
+    </header>
 
-    <!-- Form di ricerca prodotti -->
+    <!-- Barra di ricerc    a -->
     <form method="GET" action="index.php" class="search-bar">
-        <input type="text" name="cerca" class="search-input"
-               placeholder="Cerca prodotti per nome, descrizione o SKU..."
-               value="<?php echo htmlspecialchars($termine_ricerca); ?>">
+        <input
+                type="text"
+                name="cerca"
+                class="search-input"
+                placeholder="Cerca prodotti per nome, descrizione o SKU..."
+                value="<?= htmlspecialchars($termineRicerca); ?>"
+        >
         <button type="submit" class="search-btn">🔍 Cerca</button>
-        <?php if ($termine_ricerca): ?>
+
+        <?php if ($termineRicerca): ?>
             <a href="index.php" class="btn btn-secondary">❌ Cancella</a>
         <?php endif; ?>
     </form>
 
-    <!-- Risultati ricerca -->
-    <?php if ($termine_ricerca): ?>
+    <!-- Informazioni sui risultati -->
+    <?php if ($termineRicerca): ?>
         <div class="search-results-info">
-            <strong>Risultati per:</strong> "<?php echo htmlspecialchars($termine_ricerca); ?>"
-            <span>(<?php echo count($articoli); ?> prodotti trovati)</span>
+            <strong>Risultati per:</strong> "<?= htmlspecialchars($termineRicerca); ?>"
+            <span>(<?= count($articoli); ?> prodotti trovati)</span>
         </div>
     <?php endif; ?>
 
-    <!-- Lista prodotti -->
+    <!--LISTA PRODOTTI-->
     <?php if (empty($articoli)): ?>
+
         <div class="no-results">
             <h2>Nessun prodotto trovato</h2>
-            <p>Prova a modificare i termini di ricerca o <a href="index.php">visualizza tutti i prodotti</a>.</p>
+            <p>
+                Prova a modificare i termini di ricerca o
+                <a href="index.php">visualizza tutti i prodotti</a>.
+            </p>
         </div>
+
     <?php else: ?>
-        <!-- Form per cercare fornitori (richiede quantità) -->
+
         <form action="cerca_fornitori.php" method="POST">
             <div class="products-grid">
-                <?php foreach($articoli as $articolo): ?>
+                <?php foreach ($articoli as $articolo): ?>
+                    <?php
+                    $idArticolo = $articolo['id_articolo'];
+                    $nomeArticolo = htmlspecialchars($articolo['nome']);
+                    $skuArticolo = htmlspecialchars($articolo['SKU']);
+                    $descrizioneBreve = htmlspecialchars(truncateDescription($articolo['descrizione'] ?? '', 100));
+                    $immagine = getImmagineProdotto($articolo['nome']);
+                    ?>
                     <div class="product-card">
-                        <!-- Immagine prodotto con fallback -->
-                        <img src="<?php echo getImmagineProdotto($articolo['nome']); ?>"
-                             alt="<?php echo htmlspecialchars($articolo['nome']); ?>"
-                             class="product-image"
-                             onerror="this.src='https://via.placeholder.com/250x200/007bff/ffffff?text=<?php echo urlencode($articolo['nome']); ?>'">
 
-                        <div class="product-name"><?php echo htmlspecialchars($articolo['nome']); ?></div>
-                        <div class="product-sku">SKU: <?php echo htmlspecialchars($articolo['SKU']); ?></div>
-                        <div class="product-price">€<?php echo number_format($articolo['prezzo_unitario'], 2); ?></div>
-                        <div class="product-description">
-                            <?php echo htmlspecialchars(truncateDescription($articolo['descrizione'] ?? '', 100)); ?>
-                        </div>
+                        <!-- Immagine prodotto -->
+                        <img
+                                src="<?= $immagine; ?>"
+                                alt="<?= $nomeArticolo; ?>"
+                                class="product-image"
+                                onerror="this.src='https://via.placeholder.com/250x200/007bff/ffffff?text=<?= urlencode($articolo['nome']); ?>'"
+                        >
 
-                        <!-- Input quantità per ogni prodotto -->
+                        <div class="product-name"><?= $nomeArticolo; ?></div>
+                        <div class="product-sku">SKU: <?= $skuArticolo; ?></div>
+                        <div class="product-price">€<?= number_format($articolo['prezzo_unitario'], 2); ?></div>
+                        <div class="product-description"><?= $descrizioneBreve; ?></div>
+
+                        <!-- Quantità desiderata -->
                         <div class="product-form">
-                            <label for="quantita_<?php echo $articolo['id_articolo']; ?>">Quantità desiderata:</label>
-                            <input type="number" id="quantita_<?php echo $articolo['id_articolo']; ?>"
-                                   name="quantita[<?php echo $articolo['id_articolo']; ?>]"
-                                   min="0" max="100" value="0" class="quantity-input">
+                            <label for="quantita_<?= $idArticolo; ?>">Quantità desiderata:</label>
+                            <input
+                                    type="number"
+                                    id="quantita_<?= $idArticolo; ?>"
+                                    name="quantita[<?= $idArticolo; ?>]"
+                                    min="0"
+                                    max="100"
+                                    value="0"
+                                    class="quantity-input"
+                            >
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -131,26 +169,35 @@ if ($termine_ricerca) {
                 <button type="submit" class="btn btn-primary btn-large">
                     🔍 Cerca Migliori Fornitori
                 </button>
-                <?php if (!$utente_corrente): ?>
-                    <div class="info-note">ℹ️ Registrati per completare gli acquisti.</div>
+
+                <?php if (!$utenteCorrente): ?>
+                    <div class="info-note">
+                        ℹ️ Registrati per completare gli acquisti.
+                    </div>
                 <?php endif; ?>
             </div>
         </form>
+
     <?php endif; ?>
 
-    <!-- Pulsante carrello se ci sono articoli -->
+    <!--AZIONI CARRELLO-->
     <?php if (contaArticoliCarrello() > 0): ?>
         <div class="cart-actions">
             <a href="carrello.php" class="btn btn-cart btn-large">
-                🛒 Vai al Carrello (<?php echo contaArticoliCarrello(); ?> articoli)
+                🛒 Vai al Carrello (<?= contaArticoliCarrello(); ?> articoli)
             </a>
-            <?php if (!$utente_corrente): ?>
-                <div class="info-note">ℹ️ Il carrello viene salvato durante la sessione. Registrati per completare l'acquisto.</div>
+
+            <?php if (!$utenteCorrente): ?>
+                <div class="info-note">
+                    ℹ️ Il carrello viene salvato durante la sessione. Registrati per completare l'acquisto.
+                </div>
             <?php endif; ?>
         </div>
     <?php endif; ?>
-</div>
+</main>
 
+<!-- Footer -->
 <?php include 'footer.php'; ?>
+
 </body>
 </html>

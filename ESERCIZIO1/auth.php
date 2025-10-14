@@ -1,5 +1,4 @@
 <?php
-// auth.php - Sistema di autenticazione (senza OOP)
 require_once 'config.php';
 require_once 'functions.php';
 

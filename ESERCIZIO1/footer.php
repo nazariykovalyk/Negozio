@@ -249,34 +249,39 @@
         addBotMessage('Ciao! Sono l\'assistente virtuale di ShopOnline. Come posso aiutarti con i nostri prodotti di elettronica?');
 
         // Event listeners
-        chat.toggle.addEventListener('click', toggleChat);
-        chat.close.addEventListener('click', () => chat.container.classList.remove('show'));
+        chat.toggle.addEventListener('click', toggleChat);;  // Click sul toggle per aprire/chiudere
+        chat.close.addEventListener('click', () => chat.container.classList.remove('show'));//"x" per chiudere
+        //invio messaggio con enteer e bottone
         chat.input.addEventListener('keypress', e => e.key === 'Enter' && sendMessage());
         chat.send.addEventListener('click', sendMessage);
 
+        //Apre/chiude la chat
         function toggleChat() {
-            chat.container.classList.toggle('show');
-            if (chat.container.classList.contains('show')) {
+            chat.container.classList.toggle('show'); // Aggiunge/rimuove la classe 'show'
+            /*if (chat.container.classList.contains('show')) {
                 chat.input.focus();
-            }
+            }*/
         }
 
         function sendMessage() {
-            const message = chat.input.value.trim();
+            const message = chat.input.value.trim();//rimuove spazi superlfui del messaggio
             if (!message) return;
 
             addUserMessage(message);
-            chat.input.value = '';
+            chat.input.value = '';// pulisce il campo di input
             showTypingIndicator();
 
+            //invio richiesta al server
             fetch('chat_api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messaggio: message, sessione_id: chat.sessionId })
             })
                 .then(response => response.json())
+            //Gestisce la risposta dal server
                 .then(data => {
                     hideTypingIndicator();
+                    //Mostra la risposta del bot o un messaggio di errore
                     addBotMessage(data.success ? data.response : 'Mi dispiace, si è verificato un errore. Riprova.');
                 })
                 .catch(() => {
@@ -292,15 +297,16 @@
         function addBotMessage(message) {
             addMessage(message, 'bot');
         }
-
+        //aggiunge messaggio
         function addMessage(message, type) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
+            messageDiv.className = `message ${type}`;//aggiunge css
+            //aggiuge l'orario e html
             messageDiv.innerHTML = `${message}<div class="message-time">${getCurrentTime()}</div>`;
-            chat.messages.appendChild(messageDiv);
+            chat.messages.appendChild(messageDiv);// Aggiunge il messaggio al contenitore dei messaggi
             scrollToBottom();
         }
-
+        //Mostra l'indicatore "sta scrivendo"
         function showTypingIndicator() {
             const typingDiv = document.createElement('div');
             typingDiv.id = 'typing-indicator';
@@ -310,14 +316,14 @@
             chat.messages.appendChild(typingDiv);
             scrollToBottom();
         }
-
+        //Nasconde l'indicatore "sta scrivendo"
         function hideTypingIndicator() {
             const indicator = document.getElementById('typing-indicator');
             if (indicator) indicator.remove();
         }
 
         function scrollToBottom() {
-            chat.messages.scrollTop = chat.messages.scrollHeight;
+            chat.messages.scrollTop = chat.messages.scrollHeight;//scorre fino in fondo
         }
 
         function getCurrentTime() {

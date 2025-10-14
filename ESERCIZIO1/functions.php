@@ -389,7 +389,7 @@ function aggiungiMetodoPagamento($id_utente, $dati_metodo) {
             }
 
             // CONVERSIONE FORMATO DATA: da YYYY-MM a YYYY-MM-DD
-            if (!empty($dati_metodo['scadenza']) && strlen($dati_metodo['scadenza']) === 7) {
+            if (!empty($dati_metodo['scadenza']) && strlen($dati_metodo['scadenza']) === 7) {//"2025-09"
                 $dati_metodo['scadenza'] = $dati_metodo['scadenza'] . '-01';
             }
 
@@ -482,10 +482,10 @@ function impostaMetodoPreferito($id_utente, $id_metodo) {
         $stmt->execute([$id_utente]);
         $stmt = $conn->prepare("UPDATE MetodiPagamento SET preferito = TRUE WHERE id_metodo = ? AND id_utente = ?");
         $success = $stmt->execute([$id_metodo, $id_utente]);
-        $conn->commit();
+        $conn->commit();//applica modifiche
         return $success;
     } catch (Exception $e) {
-        $conn->rollBack();
+        $conn->rollBack();//se va storto non applica modifiche
         error_log("Errore impostazione metodo preferito: " . $e->getMessage());
         return false;
     }

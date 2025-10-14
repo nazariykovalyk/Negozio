@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aggiorna_profilo'])) 
         $conn = getDBConnection();
         try {
             $stmt = $conn->prepare("UPDATE Utenti SET nome = ?, cognome = ?, telefono = ?, indirizzo = ?, citta = ? WHERE id_utente = ?");
-
+            //Aggiornamento dei dati
             if ($stmt->execute([$nome, $cognome, $telefono, $indirizzo, $citta, $utente_corrente['id']])) {
                 $_SESSION['user_nome'] = $nome;
                 $_SESSION['user_cognome'] = $cognome;
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aggiungi_metodo_pagam
     } elseif ($tipo === 'paypal') {
         $dati_metodo['email_paypal'] = trim($_POST['email_paypal']);
     } elseif ($tipo === 'bonifico') {
-        $dati_metodo['iban'] = str_replace(' ', '', $_POST['iban']);
+        $dati_metodo['iban'] = str_replace(' ', '', $_POST['iban']);//elimina spazi indesiderati
     }
 
     $result = aggiungiMetodoPagamento($utente_corrente['id'], $dati_metodo);
@@ -217,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
     <div class="profilo-header">
         <h1>👤 Il Mio Profilo</h1>
         <div class="info-utente">
+            <!--Prima lettera della foto profilo-->
             <div class="avatar"><?php echo strtoupper(substr($utente_corrente['nome'], 0, 1)); ?></div>
             <div class="info-testo">
                 <strong><?php echo htmlspecialchars($utente_corrente['nome'] . ' ' . $utente_corrente['cognome']); ?></strong>
@@ -313,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
                 </div>
             <?php else: ?>
                 <?php foreach($metodi_pagamento as $metodo):
-                    $icona = match($metodo['tipo']) {
+                    $icona = match($metodo['tipo']) {//uso matc al posto di switch
                         'carta' => '💳',
                         'paypal' => '📧',
                         'bonifico' => '🏦',
@@ -324,17 +325,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
                         <div class="metodo-header">
                             <div class="metodo-tipo">
                                 <?php echo $icona . ' ' . strtoupper($metodo['tipo']); ?>
-                                <?php if ($metodo['preferito']): ?>
+                                <?php if ($metodo['preferito']): ?><!--se vero mette preferito-->
                                     <span class="metodo-preferito">PREFERITO</span>
                                 <?php endif; ?>
                             </div>
                             <div class="metodo-azioni">
-                                <?php if (!$metodo['preferito']): ?>
+                                <?php if (!$metodo['preferito']): ?><!--Imposta il preferito-->
                                     <form method="POST" style="display: inline;">
                                         <input type="hidden" name="id_metodo" value="<?php echo $metodo['id_metodo']; ?>">
                                         <button type="submit" name="imposta_preferito" class="btn-small btn-primary-small">Imposta Preferito</button>
                                     </form>
                                 <?php endif; ?>
+                                <!--rimuove il metodo di pagamento-->
                                 <form method="POST" style="display: inline;" onsubmit="return confirm('Sei sicuro di voler rimuovere questo metodo di pagamento?');">
                                     <input type="hidden" name="id_metodo" value="<?php echo $metodo['id_metodo']; ?>">
                                     <button type="submit" name="rimuovi_metodo" class="btn-small btn-danger-small">Rimuovi</button>
@@ -455,19 +457,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
 </div>
 
 <script>
+    //Attende che il DOM della pagina sia completamente caricato e pronto
     document.addEventListener('DOMContentLoaded', function() {
+        //Seleziona tutti gli elementi con classe tipo-option
         const tipoOptions = document.querySelectorAll('.tipo-option');
+        //Crea un oggetto che mappa ogni tipo di pagamento al suo rispettivo contenitore di campi
         const campi = {
             'carta': document.getElementById('campi-carta'),
             'paypal': document.getElementById('campi-paypal'),
             'bonifico': document.getElementById('campi-bonifico')
         };
-
+        //Funzione per mostrare solo i campi relativi al tipo di pagamento selezionato
         function mostraCampi(tipo) {
+            // Nasconde tutti i campi rimuovendo la classe 'attivo' da tutti i contenitori
             Object.values(campi).forEach(campo => campo.classList.remove('attivo'));
-            if (campi[tipo]) campi[tipo].classList.add('attivo');
+            if (campi[tipo]) campi[tipo].classList.add('attivo');//Se esiste aggiunge la classe 'attivo'
         }
-
+        //Aggiunge event listener a ogni opzione di pagamento
         tipoOptions.forEach(option => {
             const radio = option.querySelector('input[type="radio"]');
             option.addEventListener('click', () => {
@@ -481,18 +487,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rimuovi_metodo'])) {
             }
         });
 
-        // Formattazione input
+        //verifica se l'elemento esiste prima di aggiungere l'event listener
         document.getElementById('numero_carta')?.addEventListener('input', function(e) {
+            //Rimuove spazi e caratteri non numerici dal valore
             let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            //Formatta il numero in gruppi di 4 cifre separati da spazio
+            // Esempio: "1234567812345678" → "1234 5678 1234 5678"
             e.target.value = value.match(/.{1,4}/g)?.join(' ') || value;
         });
 
         document.getElementById('iban')?.addEventListener('input', function(e) {
+            //Rimuove spazi e converte in maiuscolo
             let value = e.target.value.replace(/\s+/g, '').toUpperCase();
+            // Esempio: "IT60X0542811101000000123456" → "IT60 X054 2811 1010 0000 0123 456"
             e.target.value = value.match(/.{1,4}/g)?.join(' ') || value;
         });
-    });
-</script>
+    });</script>
 
 <?php include 'footer.php'; ?>
 </body>
