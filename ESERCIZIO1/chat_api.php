@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // SALVA LA CONVERSAZIONE NEL DATABASE
         // Registra sia il messaggio utente che la risposta AI per storico
-        salvaConversazione($id_utente, $sessione_id, $messaggio, $result['response']);
+        //salvaConversazione($id_utente, $sessione_id, $messaggio, $result['response']);
 
         // RESTITUISCI RISPOSTA DI SUCCESSO AL CLIENT
         echo json_encode([

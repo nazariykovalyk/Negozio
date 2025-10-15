@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 require_once 'functions.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // RECUPERO DATI DAL FORM
     $id_articolo = $_POST['id_articolo'];

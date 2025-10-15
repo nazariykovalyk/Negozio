@@ -13,10 +13,10 @@ if (isUtenteLoggato()) {
 
 // Gestione login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
-    $email = trim($_POST['email']);
+    $email = trim($_POST['email']);//tolgo spazi superflui
     $password = $_POST['password'];
 
-    $result = loginUtente($email, $password);
+    $result = loginUtente($email, $password);//vedi file auth.php
 
     if ($result['success']) {
         header('Location: index.php');
@@ -97,16 +97,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         toggle.className = 'password-toggle';
         toggle.innerHTML = '👁️';
         toggle.setAttribute('aria-label', 'Mostra password');
-
+        //Trova il contenitore .form-group più vicino e aggiunge il bottone
         passwordField.closest('.form-group').appendChild(toggle);
 
         toggle.addEventListener('click', (e) => {
-            e.preventDefault();
+            e.preventDefault();//Previene il comportamento default del bottone
             const isPassword = passwordField.type === 'password';
-
+            //Cambia il tipo del campo:
+            // Se era password → diventa text (visibile)
+            // Se era text → diventa password (nascosto)
             passwordField.type = isPassword ? 'text' : 'password';
             passwordField.classList.toggle('password-field', isPassword);
-            toggle.innerHTML = isPassword ? '️‍️‍👁️‍🗨' : '👁️';
+            toggle.innerHTML = isPassword ? '️‍️‍👁️‍🗨' : '👁️';//Cambia l'emoji in base allo stato
             toggle.setAttribute('aria-label', isPassword ? 'Nascondi password' : 'Mostra password');
         });
 

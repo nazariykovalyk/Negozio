@@ -88,6 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         <div class="form-row">
             <div class="form-group">
                 <label for="nome">Nome</label>
+                <!--nome,email ecc. (tranne password)  vengono pre-compilati
+                quando succede un errore nella registrazione tipo password di 3 caratteri-->
                 <input type="text" id="nome" name="nome" required value="<?php echo htmlspecialchars($_POST['nome'] ?? ''); ?>">
             </div>
             <div class="form-group">

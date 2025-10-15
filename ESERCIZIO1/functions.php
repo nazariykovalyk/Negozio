@@ -27,6 +27,7 @@ function getArticoli() {
 
 // Calcola sconto per un fornitore
 function calcolaSconto($id_fornitore, $quantita, $prezzo_totale, $mese_corrente = null) {
+    //x Se mese_corrente non è fornito, usa il mese attuale (1-12)
     $mese_corrente = $mese_corrente ?: date('n');
     $conn = getDBConnection();
     $sconto_massimo = 0;
@@ -94,14 +95,16 @@ function salvaOrdine($id_fornitore, $dettagli_ordine) {
         $conn->beginTransaction();
 
         $totale_ordine = array_sum(array_column($dettagli_ordine, 'prezzo_finale'));
+        //inserire i dettagli del ordine singolo
         $stmt = $conn->prepare("INSERT INTO OrdiniAcquisto (data_ordine, id_fornitore, totale) VALUES (CURDATE(), ?, ?)");
         $stmt->execute([$id_fornitore, $totale_ordine]);
-        $id_ordine = $conn->lastInsertId();
-
+        $id_ordine = $conn->lastInsertId();//recupera id dell'ordine creato
+        // INSERISCE DETTAGLIO ORDINE
         foreach ($dettagli_ordine as $dettaglio) {
             $stmt = $conn->prepare("INSERT INTO DettagliOrdine (id_ordine, id_articolo, quantita, prezzo_unitario, sconto_applicato) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$id_ordine, $dettaglio['id_articolo'], $dettaglio['quantita'], $dettaglio['prezzo_unitario'], $dettaglio['sconto_applicato']]);
 
+            //Aggiornamento quantita dopo acquisto, sottrae la quantita acquistata dal magazzino del fornitore
             $stmt = $conn->prepare("UPDATE Articoli_Fornitori SET quantita_disponibile = quantita_disponibile - ? WHERE id_articolo = ? AND id_fornitore = ?");
             $stmt->execute([$dettaglio['quantita'], $dettaglio['id_articolo'], $id_fornitore]);
         }
@@ -110,7 +113,7 @@ function salvaOrdine($id_fornitore, $dettagli_ordine) {
         return $id_ordine;
 
     } catch (Exception $e) {
-        $conn->rollBack();
+        $conn->rollBack();//rollback se l'operazione non è andata bene
         throw $e;
     }
 }
@@ -132,15 +135,25 @@ function getDettagliOrdine($id_ordine) {
 
 // Aggiorna la sessione dopo un ordine
 function aggiornaSessionDopoOrdine($id_articolo, $id_fornitore, $quantita_ordinata) {
+    //Se non esistono risultati di ricerca in sessione, esce
     if (!isset($_SESSION['risultati_ricerca'])) return;
 
-    foreach ($_SESSION['risultati_ricerca'] as &$ordine) {
-        if ($ordine['id_articolo'] == $id_articolo) {
+        //Itera su tutti gli ordini nei risultati di ricerca
+        foreach ($_SESSION['risultati_ricerca'] as &$ordine) {
+        if ($ordine['id_articolo'] == $id_articolo) {//Cerca l'articolo specifico che è stato ordinato
+
+            //Itera su tutti i fornitori di questo articolo
             foreach ($ordine['fornitori'] as &$fornitore) {
+                //Trova il fornitore specifico da cui è stato ordinato
                 if ($fornitore['id_fornitore'] == $id_fornitore) {
+                    //sottrae la quantità ordinata
                     $fornitore['quantita_disponibile'] -= $quantita_ordinata;
+
+                    // Se la disponibilità è minore della quantità richiesta
                     if ($fornitore['quantita_disponibile'] < $ordine['quantita']) {
+                        //TROVA LA POSIZIONE DEL FORNITORE NELL'ARRAY
                         $key = array_search($fornitore, $ordine['fornitori']);
+                        //SE TROVATO, RIMUOVI IL FORNITORE
                         if ($key !== false) {
                             unset($ordine['fornitori'][$key]);
                             $ordine['fornitori'] = array_values($ordine['fornitori']);
@@ -156,12 +169,13 @@ function aggiornaSessionDopoOrdine($id_articolo, $id_fornitore, $quantita_ordina
 
 // Carrello functions
 function aggiungiAlCarrello($id_articolo, $quantita, $fornitore_scelto = null) {
+    //SE FORNITORE NON SPECIFICATO: cerca automaticamente il primo disponibile
     if ($fornitore_scelto === null) {
         $fornitori = trovaFornitori($id_articolo, $quantita);
-        if (empty($fornitori)) return false;
-        $fornitore_scelto = $fornitori[0];
+        if (empty($fornitori)) return false;// Nessun fornitore disponibile
+        $fornitore_scelto = $fornitori[0]; // Prende il primo fornitore
     }
-
+    //CREA L'OGGETTO DA AGGIUNGERE AL CARRELLO
     $item_carrello = [
         'id_articolo' => $id_articolo,
         'quantita' => $quantita,
@@ -174,15 +188,15 @@ function aggiungiAlCarrello($id_articolo, $quantita, $fornitore_scelto = null) {
         'nome_articolo' => $fornitore_scelto['nome_articolo'],
         'aggiunto_il' => date('Y-m-d H:i:s')
     ];
-
+    // 4. CONTROLLA SE L'ARTICOLO È GIA NEL CARRELLO (STESSO FORNITORE)
     foreach ($_SESSION['carrello'] as &$item) {
         if ($item['id_articolo'] == $id_articolo && $item['id_fornitore'] == $fornitore_scelto['id_fornitore']) {
-            $item['quantita'] += $quantita;
+            $item['quantita'] += $quantita;//somma alla quantità esistente
             salvaCarrelloAutomatico();
-            return true;
+            return true;//Articolo aggiornato
         }
     }
-
+    //SE ARTICOLO NON TROVATO: aggiungi nuovo elemento al carrello
     $_SESSION['carrello'][] = $item_carrello;
     salvaCarrelloAutomatico();
     return true;
@@ -190,6 +204,7 @@ function aggiungiAlCarrello($id_articolo, $quantita, $fornitore_scelto = null) {
 
 function rimuoviDalCarrello($index) {
     if (isset($_SESSION['carrello'][$index])) {
+        //rimuove un elemento specifico dal carrello
         array_splice($_SESSION['carrello'], $index, 1);
         salvaCarrelloAutomatico();
         return true;
@@ -199,12 +214,14 @@ function rimuoviDalCarrello($index) {
 
 function aggiornaQuantitaCarrello($index, $nuova_quantita) {
     if (isset($_SESSION['carrello'][$index]) && $nuova_quantita > 0) {
-        $item = $_SESSION['carrello'][$index];
-        $_SESSION['carrello'][$index]['quantita'] = $nuova_quantita;
+        $item = $_SESSION['carrello'][$index];//Recupera l'item dal carrello per riferimento
+        $_SESSION['carrello'][$index]['quantita'] = $nuova_quantita;//aggiorna la quantità nell'item del carrello
 
+        //calcolo prezzo totale poi sconto
         $prezzo_totale = $item['prezzo_unitario'] * $nuova_quantita;
         $sconto = calcolaSconto($item['id_fornitore'], $nuova_quantita, $prezzo_totale);
 
+        //aggiorna campi scnto e prezzo tot
         $_SESSION['carrello'][$index]['sconto_applicato'] = $sconto;
         $_SESSION['carrello'][$index]['prezzo_finale'] = $prezzo_totale * (1 - $sconto/100);
 
@@ -223,7 +240,7 @@ function contaArticoliCarrello() {
 }
 
 function svuotaCarrello() {
-    $_SESSION['carrello'] = [];
+    $_SESSION['carrello'] = [];//elimina tutti i prodotti
     salvaCarrelloAutomatico();
 }
 
@@ -235,7 +252,7 @@ function getCarrello() {
 function processaOrdineCarrello() {
     if (!isset($_SESSION['user_id'])) throw new Exception("Utente non autenticato");
     if (empty($_SESSION['carrello'])) throw new Exception("Carrello vuoto");
-
+    //VERIFICA DISPONIBILITÀ DI TUTTI GLI ARTICOLI
     foreach ($_SESSION['carrello'] as $item) {
         if (!verificaDisponibilita($item['id_articolo'], $item['id_fornitore'], $item['quantita'])) {
             throw new Exception("Quantità non disponibile per: " . $item['nome_articolo']);
@@ -251,20 +268,23 @@ function processaOrdineCarrello() {
         foreach ($_SESSION['carrello'] as $item) {
             $ordini_per_fornitore[$item['id_fornitore']][] = $item;
         }
-
+        // CREA ORDINI SEPARATI PER OGNI FORNITORE
         $id_ordini = [];
         foreach ($ordini_per_fornitore as $id_fornitore => $items) {
+            //CALCOLA TOTALE ORDINE PER QUESTO FORNITORE
             $totale_ordine = array_sum(array_column($items, 'prezzo_finale'));
-
+            //CREA ORDINE PRINCIPALE
             $stmt = $conn->prepare("INSERT INTO OrdiniAcquisto (data_ordine, id_fornitore, totale) VALUES (CURDATE(), ?, ?)");
             $stmt->execute([$id_fornitore, $totale_ordine]);
             $id_ordine = $conn->lastInsertId();
             $id_ordini[] = $id_ordine;
 
+            //AGGIUNGI DETTAGLI ORDINE E AGGIORNA MAGAZZINO
             foreach ($items as $item) {
+                // Inserisce dettaglio ordine
                 $stmt = $conn->prepare("INSERT INTO DettagliOrdine (id_ordine, id_articolo, quantita, prezzo_unitario, sconto_applicato) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$id_ordine, $item['id_articolo'], $item['quantita'], $item['prezzo_unitario'], $item['sconto_applicato']]);
-
+                // Aggiorna disponibilità magazzino
                 $stmt = $conn->prepare("UPDATE Articoli_Fornitori SET quantita_disponibile = quantita_disponibile - ? WHERE id_articolo = ? AND id_fornitore = ?");
                 $stmt->execute([$item['quantita'], $item['id_articolo'], $id_fornitore]);
             }
@@ -319,7 +339,7 @@ function truncateDescription($testo, $lunghezza) {
 function salvaCarrelloDatabase($id_utente, $carrello) {
     $conn = getDBConnection();
     try {
-        $carrello_json = json_encode($carrello);
+        $carrello_json = json_encode($carrello);//codicifica in json
         $stmt = $conn->prepare("INSERT INTO CarrelliSalvati (id_utente, carrello_data, data_salvataggio) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE carrello_data = ?, data_salvataggio = NOW()");
         $stmt->execute([$id_utente, $carrello_json, $carrello_json]);
         return true;
@@ -334,7 +354,10 @@ function caricaCarrelloDatabase($id_utente) {
     try {
         $stmt = $conn->prepare("SELECT carrello_data FROM CarrelliSalvati WHERE id_utente = ?");
         $stmt->execute([$id_utente]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);//array associativo con carello_data
+        // Verifica  se $result esiste E se carrello_data non è vuoto
+        // Se vero: decodifica il JSON in array associativo
+        // Se falso: restituisce array vuoto
         return $result && !empty($result['carrello_data']) ? json_decode($result['carrello_data'], true) : [];
     } catch (Exception $e) {
         error_log("Errore caricamento carrello: " . $e->getMessage());
@@ -343,7 +366,7 @@ function caricaCarrelloDatabase($id_utente) {
 }
 
 function salvaCarrelloAutomatico() {
-    if (isset($_SESSION['user_id']) && isset($_SESSION['carrello'])) {
+    if (isset($_SESSION['user_id']) && isset($_SESSION['carrello'])) {//se esiste utente e se ha un carrello
         salvaCarrelloDatabase($_SESSION['user_id'], $_SESSION['carrello']);
     }
 }
@@ -548,6 +571,8 @@ function verificaDisponibilita($id_articolo, $id_fornitore, $quantita_richiesta)
     $stmt = $conn->prepare("SELECT quantita_disponibile FROM Articoli_Fornitori WHERE id_articolo = ? AND id_fornitore = ?");
     $stmt->execute([$id_articolo, $id_fornitore]);
     $disponibilita = $stmt->fetch(PDO::FETCH_ASSOC);
+    // - Se il record esiste ($disponibilita non è false)
+    // - E la quantità disponibile è >= a quella richiesta
     return $disponibilita && $disponibilita['quantita_disponibile'] >= $quantita_richiesta;
 }
 

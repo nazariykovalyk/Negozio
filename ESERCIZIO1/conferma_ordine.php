@@ -9,14 +9,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isUtenteLoggato()) {
     header('Location: login.php');
     exit;
 }
-
+// Se non è una richiesta POST, reindirizza alla home
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: index.php');
     exit;
 }
-
+//GESTIONE ORDINE (in blocco try-catch per errori)
 try {
-    // VERIFICA DISPONIBILITÀ PRIMA DI PROCEDERE
     $id_articolo = $_POST['id_articolo'];
     $id_fornitore = $_POST['id_fornitore'];
     $quantita = $_POST['quantita'];
@@ -33,7 +32,7 @@ try {
         exit;
     }
 
-    // Prepara e salva ordine
+    // Prepara e salva ordine ,crea array con tutti i dettagli dell'ordine
     $dettaglio_ordine = [
             'id_articolo' => $id_articolo,
             'quantita' => $quantita,
@@ -97,6 +96,7 @@ try {
                         <td><?php echo $dettaglio['quantita']; ?></td>
                         <td>€<?php echo number_format($dettaglio['prezzo_unitario'], 2); ?></td>
                         <td><?php echo number_format($dettaglio['sconto_applicato'], 1); ?>%</td>
+                        <!--PREZZO TOTALE = (Prezzo Unitario × Quantità) × (1 - Sconto%)-->
                         <td>€<?php echo number_format($dettaglio['prezzo_unitario'] * $dettaglio['quantita'] * (1 - $dettaglio['sconto_applicato']/100), 2); ?></td>
                     </tr>
                 <?php endforeach; ?>

@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (isset($_POST['svuota_carrello'])) {
         svuotaCarrello();
     }
+    //controlla se loggato e se procedi_acquisto esiste
     elseif (isset($_POST['procedi_acquisto'])) {
         if (!isUtenteLoggato()) {
             $_SESSION['error'] = "Devi essere registrato per completare l'acquisto";
@@ -20,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         $utente_corrente = getUtenteCorrente();
+        //deve avere un metodo di pagamento
         if (!haMetodiPagamento($utente_corrente['id'])) {
             $_SESSION['error'] = "Devi aggiungere un metodo di pagamento prima di procedere all'acquisto";
             header('Location: profilo.php#metodi-pagamento');
@@ -132,9 +134,11 @@ $ha_metodi_pagamento = $utente_corrente ? haMetodiPagamento($utente_corrente['id
                 <h3>💳 Metodo di Pagamento</h3>
                 <p><strong>Metodo selezionato:</strong>
                     <?php
+                    //mostra metodo di pagamento preferito
                     $metodo_preferito = getMetodoPreferito($utente_corrente['id']);
                     if ($metodo_preferito):
                         echo htmlspecialchars($metodo_preferito['tipo']) . ' - ';
+                        //verfica se carta, paypal o bonifico
                         echo match($metodo_preferito['tipo']) {
                             'carta' => formattaNumeroCarta($metodo_preferito['numero_carta']),
                             'paypal' => htmlspecialchars($metodo_preferito['email_paypal']),
@@ -150,7 +154,7 @@ $ha_metodi_pagamento = $utente_corrente ? haMetodiPagamento($utente_corrente['id
                 <a href="profilo.php#metodi-pagamento" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;color: #0F1111;">Cambia Metodo</a>
             </div>
         <?php endif; ?>
-
+        <!--item card-->
         <?php foreach ($carrello as $index => $item): ?>
             <div class="item-carrello">
                 <div class="item-header">
@@ -182,7 +186,7 @@ $ha_metodi_pagamento = $utente_corrente ? haMetodiPagamento($utente_corrente['id
                 </div>
             </div>
         <?php endforeach; ?>
-
+        <!--totale sezione-->
         <div class="totale-section">
             <h2>Totale carrello: <span class="totale-importo">€<?php echo number_format($totale, 2); ?></span></h2>
             <p style="color: #565959;">Spedizione: Calcolata per ogni fornitore</p>

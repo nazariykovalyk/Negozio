@@ -9,8 +9,8 @@ function registraUtente($email, $password, $nome, $cognome, $ruolo = 'cliente', 
     try {
         // Verifica se l'email esiste già
         $stmt = $conn->prepare("SELECT id_utente FROM Utenti WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->fetch()) {
+        $stmt->execute([$email]);//Esegue la query sostituendo il '?' con l'email fornita
+        if ($stmt->fetch()) {//Se trova un risultato (email già esistente), ritorna un errore
             return ['success' => false, 'message' => 'Email già registrata'];
         }
 
@@ -32,16 +32,17 @@ function loginUtente($email, $password) {
     $conn = getDBConnection();
 
     try {
+        //Cerca per email e verifica che l'account sia attivo
         $stmt = $conn->prepare("SELECT id_utente, email, password_hash, nome, cognome, ruolo, attivo FROM Utenti WHERE email = ? AND attivo = 1");
         $stmt->execute([$email]);
-        $utente = $stmt->fetch(PDO::FETCH_ASSOC);
-
+        $utente = $stmt->fetch(PDO::FETCH_ASSOC);//restituisce il elemnto in un array assocaitivo
+        //verifica che utente esiste e password hash
         if ($utente && password_verify($password, $utente['password_hash'])) {
             // Aggiorna ultimo accesso
             $stmt = $conn->prepare("UPDATE Utenti SET ultimo_accesso = NOW() WHERE id_utente = ?");
             $stmt->execute([$utente['id_utente']]);
 
-            // Imposta session
+            // Memorizza i dati dell'utente nella sessione PHP
             $_SESSION['user_id'] = $utente['id_utente'];
             $_SESSION['user_email'] = $utente['email'];
             $_SESSION['user_nome'] = $utente['nome'];
