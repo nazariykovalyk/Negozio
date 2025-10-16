@@ -1,4 +1,10 @@
 <?php
+
+//Questo codice riceve i messaggi dalla
+// chat frontend e li invia all'AI di Perplexity,
+// poi restituisce le risposte formattate in JSON al browser.
+// È il "ponte" tra l'utente e l'intelligenza artificiale.
+
 require_once 'config.php';
 require_once 'auth.php';
 require_once 'perplexity_api.php';
@@ -29,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // PREPARAZIONE CONTESTO PER L'AI
+    //Arricchisce il prompt per l'AI con informazioni utente
     $contesto = "";
     if ($id_utente) {
         $contesto = "L'utente è registrato nel sistema.";  // Aggiungi contesto per utenti registrati
@@ -37,11 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // INIZIALIZZA IL CLIENT PER L'API DI PERPLEXITY
     $perplexity = new PerplexityAPI();
 
-    // INVIA IL MESSAGGIO ALL'API DI PERPLEXITY
-    $result = $perplexity->sendMessage($messaggio, $contesto);
+    // INVIA IL MESSAGGIO ALL'API DI PERPLEXITYII
+    //Delega la logica complessa alla classe specializzata
+    $result = $perplexity->sendMessage($messaggio);
 
     if ($result['success']) {
-
         // SALVA LA CONVERSAZIONE NEL DATABASE
         // Registra sia il messaggio utente che la risposta AI per storico
         //salvaConversazione($id_utente, $sessione_id, $messaggio, $result['response']);
@@ -54,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
     } else {
-        // Problema con l'API di Perplexity
+        // se ce un Problema con l'API di Perplexity
         echo json_encode([
             'success' => false,
             'response' => $result['response']   // Messaggio di errore dall'API
