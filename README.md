@@ -101,3 +101,4 @@ Analisi TDD/BDD: https://1drv.ms/w/c/6388146e8998ea37/EeTdq6jOC01JmaTNrGXKwFUBtO
 
 Manuale d'Uso: https://1drv.ms/w/c/6388146e8998ea37/ETh6n8Ev1YVLkywqvoHR5rMBtsGHlETpECgg_Qfh40zCQA?e=pl8Gii
 
+Manuale per il Deployment: https://1drv.ms/w/c/6388146e8998ea37/ES39VjCaAL5Bt-c9gQkhCMkB723o8QtD6ESDEHCXBiMa4g?e=ut7cbD
